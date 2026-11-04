@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AvdDex Console — AVD Digital Experience</title>
+<style>
+:root{
+  --surface:#1a1a19;--panel:#222221;--panel-2:#2a2a28;--border:#363634;--border-2:#45453f;
+  --text:#f0efec;--text-2:#c3c2b7;--muted:#8f8e86;
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
+  --good:#0ca30c;--warn:#fab219;--serious:#ec835a;--crit:#d03b3b;
+  --good-bg:rgba(12,163,12,.16);--warn-bg:rgba(250,178,25,.16);--serious-bg:rgba(236,131,90,.18);--crit-bg:rgba(208,59,59,.2);
+  --radius:8px;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+:root[data-theme="light"]{
+  --surface:#fcfcfb;--panel:#ffffff;--panel-2:#f3f2ee;--border:#e2e1db;--border-2:#cfceC6;
+  --text:#0b0b0b;--text-2:#52514e;--muted:#7a7972;
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#6250d6;--s8:#e34948;
+  --good-bg:rgba(12,163,12,.12);--warn-bg:rgba(250,178,25,.18);--serious-bg:rgba(236,131,90,.18);--crit-bg:rgba(208,59,59,.14);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--surface);color:var(--text);font:13px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--s1)}
+button,select,input{font:inherit;color:inherit}
+.btn{background:var(--panel-2);border:1px solid var(--border-2);border-radius:6px;padding:6px 10px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--text-2)}
+.btn.primary{background:var(--s1);border-color:var(--s1);color:#fff}
+.btn.small{padding:3px 8px;font-size:12px}
+select.btn,input.btn{cursor:auto}
+header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--panel);position:sticky;top:0;z-index:20}
+header h1{font-size:16px;margin:0 12px 0 0;font-weight:650;letter-spacing:.2px}
+header h1 span{color:var(--muted);font-weight:400;font-size:12px;margin-left:8px}
+.status{display:flex;gap:8px;align-items:center;color:var(--text-2);font-size:12px;margin-left:auto;flex-wrap:wrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.dot.live{background:var(--good)} .dot.stale{background:var(--warn)} .dot.demo{background:var(--s7)}
+nav{display:flex;gap:2px;padding:6px 14px 0;border-bottom:1px solid var(--border);background:var(--panel);overflow-x:auto}
+nav button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;color:var(--text-2);cursor:pointer;white-space:nowrap}
+nav button.active{color:var(--text);border-bottom-color:var(--s1)}
+nav button .n{background:var(--panel-2);border:1px solid var(--border-2);border-radius:10px;padding:0 6px;font-size:11px;margin-left:6px;color:var(--text-2)}
+main{padding:14px;max-width:1800px;margin:0 auto}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.toolbar .spacer{flex:1}
+.grid{display:grid;gap:12px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.tile{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;min-height:78px}
+.tile .label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.tile .value{font-size:26px;font-weight:650;margin-top:4px;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile .sub{color:var(--text-2);font-size:12px;margin-top:4px}
+.tile.good .value{color:var(--good)} .tile.warn .value{color:var(--warn)} .tile.crit .value{color:var(--crit)}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;min-width:0}
+.panel h3{margin:0 0 8px;font-size:13px;font-weight:600;color:var(--text-2);display:flex;align-items:center;gap:8px}
+.panel h3 .hint{font-weight:400;color:var(--muted);font-size:11px;margin-left:auto}
+.cols-2{grid-template-columns:repeat(auto-fit,minmax(380px,1fr))}
+.cols-3{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.tablewrap{overflow:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 9px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+th{position:sticky;top:0;background:var(--panel-2);color:var(--text-2);font-weight:600;cursor:pointer;user-select:none;z-index:1}
+th.sorted::after{content:" ▾";color:var(--s1)} th.sorted.asc::after{content:" ▴"}
+tbody tr{cursor:pointer} tbody tr:hover{background:var(--panel-2)}
+td.num,th.num{text-align:right}
+td.heat{border-left:3px solid transparent}
+td.warn{background:var(--warn-bg);border-left-color:var(--warn)} td.serious{background:var(--serious-bg);border-left-color:var(--serious)} td.crit{background:var(--crit-bg);border-left-color:var(--crit)}
+.chip{display:inline-flex;align-items:center;gap:5px;border-radius:12px;padding:1px 8px;font-size:11.5px;font-weight:600;border:1px solid transparent}
+.chip.Healthy{background:var(--good-bg);color:var(--good);border-color:var(--good)}
+.chip.Watch{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+.chip.Stressed{background:var(--serious-bg);color:var(--serious);border-color:var(--serious)}
+.chip.Critical{background:var(--crit-bg);color:var(--crit);border-color:var(--crit)}
+.chip.Stale,.chip.na{background:var(--panel-2);color:var(--muted);border-color:var(--border-2)}
+.chip.critical{background:var(--crit-bg);color:var(--crit);border-color:var(--crit)} .chip.warning{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)} .chip.info{background:rgba(57,135,229,.16);color:var(--s1);border-color:var(--s1)}
+:root[data-theme="light"] .chip.Watch,:root[data-theme="light"] .chip.warning{color:#7a5300}
+:root[data-theme="light"] .chip.Stressed{color:#9a4420}
+.bar{height:6px;background:var(--panel-2);border-radius:3px;overflow:hidden;display:inline-block;width:70px;vertical-align:middle;margin-right:6px}
+.bar i{display:block;height:100%;background:var(--s1);border-radius:3px}
+.bar.warn i{background:var(--warn)} .bar.crit i{background:var(--crit)} .bar.serious i{background:var(--serious)}
+.list{margin:0;padding:0;list-style:none}
+.list li{display:flex;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.list li:last-child{border-bottom:0}
+.list .msg{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .meta{color:var(--muted);font-size:11.5px;white-space:nowrap}
+.empty{color:var(--muted);padding:24px;text-align:center}
+svg text{fill:var(--text-2);font-size:11px;font-family:inherit}
+svg .grid line{stroke:var(--border);stroke-width:1}
+svg .axis{stroke:var(--border-2)}
+.chart{width:100%;height:220px;display:block}
+.chart.tall{height:280px}
+.spark{width:100%;height:46px;display:block}
+.tooltip{position:fixed;pointer-events:none;background:var(--panel);border:1px solid var(--border-2);border-radius:6px;padding:6px 9px;font-size:12px;box-shadow:0 6px 20px rgba(0,0,0,.35);z-index:50;display:none;max-width:320px}
+.tooltip b{color:var(--text)} .tooltip div{white-space:nowrap}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(760px,100vw);background:var(--panel);border-left:1px solid var(--border);transform:translateX(100%);transition:transform .2s;z-index:40;overflow:auto;padding:16px 18px;box-shadow:-12px 0 30px rgba(0,0,0,.35)}
+.drawer.open{transform:none}
+.drawer h2{margin:0 0 4px;font-size:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.drawer .close{position:absolute;top:10px;right:12px}
+.drawer h4{margin:16px 0 6px;color:var(--text-2);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 14px;font-size:12.5px}
+.kv div span{color:var(--muted);display:block;font-size:11px}
+.factors{display:flex;flex-wrap:wrap;gap:6px}
+.factors span{background:var(--serious-bg);border:1px solid var(--serious);color:var(--serious);border-radius:6px;padding:2px 8px;font-size:12px}
+:root[data-theme="light"] .factors span{color:#9a4420}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:30;display:none}
+.overlay.open{display:block}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--text-2);margin:4px 0 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.seg{display:flex;height:18px;border-radius:4px;overflow:hidden;background:var(--panel-2);gap:2px}
+.seg div{height:100%;min-width:2px}
+.dropzone{border:2px dashed var(--border-2);border-radius:var(--radius);padding:30px;text-align:center;color:var(--text-2);margin:40px auto;max-width:720px;background:var(--panel)}
+.dropzone.hover{border-color:var(--s1)}
+.dropzone h2{margin:0 0 8px;font-size:18px}
+.dropzone p{margin:6px 0}
+.dropzone .actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.mono{font-family:var(--mono);font-size:12px}
+.sev-crit{color:var(--crit)} .sev-warn{color:var(--warn)} .sev-info{color:var(--s1)}
+.pill-row{display:flex;gap:6px;flex-wrap:wrap}
+.pill{border:1px solid var(--border-2);border-radius:12px;padding:2px 10px;cursor:pointer;color:var(--text-2);font-size:12px;background:var(--panel-2)}
+.pill.on{border-color:var(--s1);color:var(--text)}
+@media print{header,nav,.toolbar,.drawer,.overlay{display:none!important} main{padding:0} .panel{break-inside:avoid}}
+@media (max-width:640px){header h1 span{display:none} .tile .value{font-size:22px} main{padding:10px}}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="brand">AvdDex Console <span>Digital Employee Experience for AVD / RDS</span></h1>
+  <button class="btn" id="btnFolder" title="Point at the DEX share root (the folder containing latest\ and fleet.json). Re-reads automatically.">📁 Open DEX folder</button>
+  <label class="btn" title="Load fleet.json / trends.json / latest\*.json">📄 Load files<input id="fileInput" type="file" multiple style="display:none"></label>
+  <button class="btn" id="btnDemo">▶ Demo data</button>
+  <button class="btn" id="btnRefresh" title="Re-read the data source">⟳</button>
+  <label class="btn" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="autoRefresh" checked>auto 30s</label>
+  <button class="btn" id="btnTheme" title="Toggle light/dark">◐</button>
+  <div class="status"><span class="dot" id="srcDot"></span><span id="srcText">No data loaded</span><span id="ageText"></span></div>
+</header>
+<nav id="nav">
+  <button data-tab="overview" class="active">Overview</button>
+  <button data-tab="hosts">Hosts <span class="n" id="nHosts">0</span></button>
+  <button data-tab="sessions">Sessions <span class="n" id="nSessions">0</span></button>
+  <button data-tab="alerts">Alerts <span class="n" id="nAlerts">0</span></button>
+  <button data-tab="reports">Reports</button>
+  <button data-tab="capacity">Capacity</button>
+</nav>
+<main id="main"></main>
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer"></aside>
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+'use strict';
+// ============================================================================================
+// State
+// ============================================================================================
+const S = {
+  fleet: null, trends: null, source: 'none', sourceLabel: '', dirHandle: null, tab: 'overview',
+  pool: '', search: '', sort: { hosts: ['Score', 1], sessions: ['Score', 1] }, alertSev: { critical: true, warning: true, info: true },
+  reportRange: 7, timer: null
+};
+const $ = (q, el = document) => el.querySelector(q);
+const $$ = (q, el = document) => Array.from(el.querySelectorAll(q));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const n0 = v => (v == null || isNaN(v)) ? '—' : Math.round(v).toLocaleString();
+const n1 = v => (v == null || isNaN(v)) ? '—' : (Math.round(v * 10) / 10).toLocaleString();
+const pct = v => v == null ? '—' : n0(v) + '%';
+const ms = v => v == null ? '—' : n0(v) + ' ms';
+const secs = v => v == null ? '—' : (v >= 60 ? Math.floor(v / 60) + 'm ' + Math.round(v % 60) + 's' : n0(v) + 's');
+const gb = mb => mb == null ? '—' : (mb / 1024).toFixed(1) + ' GB';
+const ago = iso => { if (!iso) return '—'; const s = (Date.now() - new Date(iso)) / 1000; if (s < 90) return Math.round(s) + 's ago'; if (s < 5400) return Math.round(s / 60) + 'm ago'; if (s < 172800) return (s / 3600).toFixed(1) + 'h ago'; return Math.round(s / 86400) + 'd ago'; };
+const hours = h => h == null ? '—' : (h < 48 ? n0(h) + 'h' : (h / 24).toFixed(1) + 'd');
+const stressOf = sc => sc == null ? 'na' : sc >= 80 ? 'Healthy' : sc >= 60 ? 'Watch' : sc >= 40 ? 'Stressed' : 'Critical';
+const heat = (v, warn, crit, invert = false) => { if (v == null) return ''; if (invert) { if (v <= crit) return 'crit'; if (v <= warn) return 'warn'; return 'ok'; } if (v >= crit) return 'crit'; if (v >= warn) return 'warn'; return 'ok'; };
+const chip = (score, stress) => `<span class="chip ${esc(stress || stressOf(score))}">${score == null ? '—' : Math.round(score)}<small style="font-weight:400">${esc(stress || stressOf(score))}</small></span>`;
+const sevChip = s => `<span class="chip ${esc(s)}">${esc(s)}</span>`;
+const T = { CpuWarn: 80, CpuCrit: 92, MemWarn: 85, MemCrit: 94, DLatWarn: 20, DLatCrit: 45, FreeWarn: 15, FreeCrit: 7, RttWarn: 120, RttCrit: 220, LagWarn: 400, LagCrit: 1000, LogonWarn: 45, LogonCrit: 90, SCpuWarn: 50, SCpuCrit: 85, GpuWarn: 85, GpuCrit: 97 };
+
+// ============================================================================================
+// Data loading
+// ============================================================================================
+function setSource(kind, label) { S.source = kind; S.sourceLabel = label; const d = $('#srcDot'); d.className = 'dot ' + (kind === 'demo' ? 'demo' : kind === 'none' ? '' : 'live'); $('#srcText').textContent = label; }
+function updateAge() { const t = $('#ageText'); if (!S.fleet) { t.textContent = ''; return; } const a = (Date.now() - new Date(S.fleet.GeneratedAt)) / 1000; t.textContent = '· data ' + ago(S.fleet.GeneratedAt); $('#srcDot').className = 'dot ' + (S.source === 'demo' ? 'demo' : a > 600 ? 'stale' : 'live'); }
+
+async function tryFetch() {
+  if (location.protocol === 'file:') return false;
+  try {
+    const r = await fetch('fleet.json', { cache: 'no-store' }); if (!r.ok) return false;
+    const fleet = await r.json(); let trends = null;
+    try { const t = await fetch('trends.json', { cache: 'no-store' }); if (t.ok) trends = await t.json(); } catch (e) { }
+    applyData(fleet, trends); setSource('http', 'fleet.json (served)'); return true;
+  } catch (e) { return false; }
+}
+
+async function openFolder() {
+  if (!window.showDirectoryPicker) { alert('Folder access needs Edge or Chrome. Use "Load files" instead.'); return; }
+  try { S.dirHandle = await window.showDirectoryPicker({ mode: 'read' }); await readFolder(); } catch (e) { if (e.name !== 'AbortError') alert('Could not open folder: ' + e.message); }
+}
+async function readFolder() {
+  const dir = S.dirHandle; if (!dir) return;
+  const readJson = async (parent, name) => { try { const fh = await parent.getFileHandle(name); return JSON.parse(await (await fh.getFile()).text()); } catch (e) { return null; } };
+  let fleet = await readJson(dir, 'fleet.json'); const trends = await readJson(dir, 'trends.json');
+  if (!fleet) {
+    // No merge output yet - build the fleet view straight from latest\*.json
+    const snaps = [];
+    try { const latest = await dir.getDirectoryHandle('latest'); for await (const [name, h] of latest.entries()) { if (name.endsWith('.json') && h.kind === 'file') { try { snaps.push(JSON.parse(await (await h.getFile()).text())); } catch (e) { } } } } catch (e) { }
+    if (!snaps.length) { alert('No fleet.json and no latest\\*.json found in that folder. Point at the DEX share root.'); return; }
+    fleet = buildFleet(snaps);
+  }
+  applyData(fleet, trends); setSource('folder', 'Folder: ' + dir.name);
+}
+
+async function loadFiles(files) {
+  let fleet = null, trends = null; const snaps = [];
+  for (const f of files) {
+    try { const j = JSON.parse(await f.text()); if (j && j.Hosts && j.Summary) fleet = j; else if (j && j.Hourly) trends = j; else if (j && j.Host && j.Metrics) snaps.push(j); } catch (e) { }
+  }
+  if (!fleet && snaps.length) fleet = buildFleet(snaps);
+  if (!fleet) { alert('Nothing usable in those files. Drop fleet.json, trends.json, or host snapshots from latest\\.'); return; }
+  applyData(fleet, trends); setSource('files', files.length + ' file(s)');
+}
+
+// Client-side equivalent of Merge-AvdDexFleet.ps1's summary (used when only agent output exists)
+function buildFleet(snaps, staleMin = 5) {
+  const now = Date.now();
+  snaps.forEach(s => { s.AgeSeconds = Math.round((now - new Date(s.Timestamp)) / 1000); s.Stale = s.AgeSeconds > staleMin * 60; });
+  const online = snaps.filter(s => !s.Stale), sessions = online.flatMap(h => h.Sessions || []), active = sessions.filter(s => s.State === 'Active');
+  const alerts = online.flatMap(h => (h.Alerts || []).map(a => ({ ...a, Host: h.Host, HostPool: h.HostPool })));
+  const stress = { Healthy: 0, Watch: 0, Stressed: 0, Critical: 0 }; online.forEach(h => { if (stress[h.Score.Stress] != null) stress[h.Score.Stress]++; });
+  const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+  return {
+    SchemaVersion: 1, GeneratedAt: new Date(now).toISOString(), GeneratedBy: 'dashboard', StaleMinutes: staleMin,
+    Summary: { Hosts: snaps.length, Online: online.length, Stale: snaps.length - online.length, Sessions: sessions.length, ActiveSessions: active.length, DisconnectedSessions: sessions.length - active.length,
+      AvgHostScore: avg(online.map(h => h.Score.Score)), AvgSessionScore: avg(active.map(s => s.Score.Score)), Stress: stress,
+      Alerts: { critical: alerts.filter(a => a.Severity === 'critical').length, warning: alerts.filter(a => a.Severity === 'warning').length, info: alerts.filter(a => a.Severity === 'info').length },
+      Pools: [...new Set(snaps.map(s => s.HostPool).filter(Boolean))].sort() },
+    Hosts: snaps.sort((a, b) => a.Host.localeCompare(b.Host)), RightSizing: []
+  };
+}
+
+function applyData(fleet, trends) {
+  S.fleet = fleet; S.trends = trends || S.trends;
+  $('#brand').innerHTML = `${esc(fleet.OrgName ? fleet.OrgName + ' · ' : '')}AvdDex Console <span>Digital Employee Experience for AVD / RDS</span>`; document.title = (fleet.OrgName ? fleet.OrgName + ' · ' : '') + 'AvdDex Console';
+  // normalise: every alert carries Host/HostPool; every session carries host refs
+  fleet.Hosts.forEach(h => { (h.Alerts || []).forEach(a => { a.Host = h.Host; a.HostPool = h.HostPool; }); (h.Sessions || []).forEach(s => { s._host = h.Host; s._pool = h.HostPool; s._hostScore = h.Score.Score; s._stale = h.Stale; }); });
+  render();
+}
+
+async function refresh() {
+  if (S.source === 'folder') await readFolder();
+  else if (S.source === 'http') await tryFetch();
+  else if (S.source === 'demo') { applyData(...demoData()); }
+  updateAge();
+}
+
+// ============================================================================================
+// Derived views
+// ============================================================================================
+const hostsView = () => (S.fleet?.Hosts || []).filter(h => (!S.pool || h.HostPool === S.pool) && (!S.search || h.Host.toLowerCase().includes(S.search)));
+const sessionsView = () => hostsView().flatMap(h => h.Sessions || []).filter(s => !S.search || (s.UserName || '').toLowerCase().includes(S.search) || s._host.toLowerCase().includes(S.search));
+const alertsView = () => hostsView().filter(h => !h.Stale).flatMap(h => h.Alerts || []).filter(a => S.alertSev[a.Severity] && (!S.search || (a.Target + a.Message).toLowerCase().includes(S.search)));
+const sevRank = { critical: 0, warning: 1, info: 2 };
+
+// ============================================================================================
+// Rendering
+// ============================================================================================
+function render() {
+  if (!S.fleet) { $('#main').innerHTML = landing(); wireLanding(); return; }
+  const f = S.fleet;
+  $('#nHosts').textContent = f.Hosts.length; $('#nSessions').textContent = f.Summary.Sessions; $('#nAlerts').textContent = f.Summary.Alerts.critical + f.Summary.Alerts.warning;
+  $$('#nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === S.tab));
+  const m = $('#main');
+  m.innerHTML = toolbar() + ({ overview: overview, hosts: hostsTab, sessions: sessionsTab, alerts: alertsTab, reports: reportsTab, capacity: capacityTab }[S.tab])();
+  wireToolbar(); wireTables(); drawCharts();
+  updateAge();
+}
+
+function landing() {
+  return `<div class="dropzone" id="drop">
+    <h2>AvdDex Console</h2>
+    <p>Real-time host &amp; session experience for your AVD / RDS estate — ControlUp-style, with no credentials in the browser.</p>
+    <p class="mono" style="color:var(--muted)">Reads <b>fleet.json</b> / <b>trends.json</b> written by Merge-AvdDexFleet.ps1, or the raw <b>latest\\*.json</b> snapshots from the agents.</p>
+    <div class="actions"><button class="btn primary" onclick="openFolder()">📁 Open the DEX share folder</button><label class="btn">📄 Load files<input type="file" multiple onchange="loadFiles(this.files)" style="display:none"></label><button class="btn" onclick="startDemo()">▶ Explore with demo data</button></div>
+    <p style="margin-top:14px;color:var(--muted)">…or drag fleet.json / snapshot files anywhere on this page.</p>
+  </div>`;
+}
+function wireLanding() { }
+
+function toolbar() {
+  const pools = S.fleet.Summary.Pools || [];
+  const poolSel = `<select class="btn" id="poolSel"><option value="">All host pools (${S.fleet.Hosts.length})</option>${pools.map(p => `<option ${S.pool === p ? 'selected' : ''} value="${esc(p)}">${esc(p)} (${S.fleet.Hosts.filter(h => h.HostPool === p).length})</option>`).join('')}</select>`;
+  const search = `<input class="btn" id="search" placeholder="Filter host / user…" value="${esc(S.search)}" style="min-width:180px">`;
+  let extra = '';
+  if (S.tab === 'alerts') extra = `<div class="pill-row">${['critical', 'warning', 'info'].map(s => `<span class="pill ${S.alertSev[s] ? 'on' : ''}" data-sev="${s}">${s}</span>`).join('')}</div>`;
+  if (S.tab === 'reports') extra = `<div class="pill-row">${[1, 7, 30, 90].map(d => `<span class="pill ${S.reportRange === d ? 'on' : ''}" data-range="${d}">${d === 1 ? '24h' : d + 'd'}</span>`).join('')}</div><button class="btn small" onclick="window.print()">🖨 Print / PDF</button>`;
+  if (S.tab === 'hosts') extra = `<button class="btn small" onclick="exportCsv('hosts')">⬇ CSV</button>`;
+  if (S.tab === 'sessions') extra = `<button class="btn small" onclick="exportCsv('sessions')">⬇ CSV</button>`;
+  if (S.tab === 'alerts') extra += `<button class="btn small" onclick="exportCsv('alerts')">⬇ CSV</button>`;
+  return `<div class="toolbar">${poolSel}${search}<div class="spacer"></div>${extra}</div>`;
+}
+function wireToolbar() {
+  $('#poolSel')?.addEventListener('change', e => { S.pool = e.target.value; render(); });
+  const si = $('#search'); if (si) { si.addEventListener('input', e => { S.search = e.target.value.trim().toLowerCase(); render(); const el = $('#search'); el.focus(); el.setSelectionRange(el.value.length, el.value.length); }); }
+  $$('[data-sev]').forEach(p => p.onclick = () => { S.alertSev[p.dataset.sev] = !S.alertSev[p.dataset.sev]; render(); });
+  $$('[data-range]').forEach(p => p.onclick = () => { S.reportRange = +p.dataset.range; render(); });
+}
+
+// ---------------------------------------------------------------- Overview
+function overview() {
+  const f = S.fleet, hs = hostsView(), online = hs.filter(h => !h.Stale), sess = sessionsView(), act = sess.filter(s => s.State === 'Active'), al = online.flatMap(h => h.Alerts || []);
+  const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+  const hostScore = avg(online.map(h => h.Score.Score)), sessScore = avg(act.map(s => s.Score.Score));
+  const crit = al.filter(a => a.Severity === 'critical').length, warn = al.filter(a => a.Severity === 'warning').length;
+  const stressed = online.filter(h => h.Score.Score < 60).length, stale = hs.length - online.length;
+  const cls = v => v == null ? '' : v >= 80 ? 'good' : v >= 60 ? 'warn' : 'crit';
+  const byId = {}; al.forEach(a => { (byId[a.Id] ||= { id: a.Id, n: 0, sev: a.Severity, targets: new Set(), fix: a.Remediation }).n++; byId[a.Id].targets.add(a.Target); });
+  const issues = Object.values(byId).sort((a, b) => sevRank[a.sev] - sevRank[b.sev] || b.n - a.n).slice(0, 8);
+  const worstHosts = [...online].sort((a, b) => a.Score.Score - b.Score.Score).slice(0, 6);
+  const worstSess = [...act].sort((a, b) => a.Score.Score - b.Score.Score).slice(0, 6);
+  const dist = ['Healthy', 'Watch', 'Stressed', 'Critical'].map(k => ({ k, n: online.filter(h => h.Score.Stress === k).length }));
+  const sDist = ['Healthy', 'Watch', 'Stressed', 'Critical'].map(k => ({ k, n: act.filter(s => s.Score.Stress === k).length }));
+  const slowLogons = act.filter(s => s.Logon?.TotalSec != null).sort((a, b) => b.Logon.TotalSec - a.Logon.TotalSec).slice(0, 5);
+  return `
+  <div class="grid kpis" style="margin-bottom:12px">
+    <div class="tile ${cls(hostScore)}"><div class="label">Fleet DEX score</div><div class="value">${n0(hostScore)}</div><div class="sub">${esc(stressOf(hostScore))} · ${online.length} host${online.length === 1 ? '' : 's'} online</div></div>
+    <div class="tile ${cls(sessScore)}"><div class="label">Session experience</div><div class="value">${n0(sessScore)}</div><div class="sub">${act.length} active · ${sess.length - act.length} disconnected</div></div>
+    <div class="tile ${crit ? 'crit' : warn ? 'warn' : 'good'}"><div class="label">Open alerts</div><div class="value">${crit + warn}</div><div class="sub"><span class="sev-crit">${crit} critical</span> · <span class="sev-warn">${warn} warning</span></div></div>
+    <div class="tile ${stressed ? 'warn' : 'good'}"><div class="label">Hosts under stress</div><div class="value">${stressed}</div><div class="sub">score &lt; 60</div></div>
+    <div class="tile ${stale ? 'warn' : ''}"><div class="label">Stale / offline</div><div class="value">${stale}</div><div class="sub">no sample in ${f.StaleMinutes || 5} min</div></div>
+    <div class="tile"><div class="label">Sessions / host</div><div class="value">${online.length ? n1(sess.length / online.length) : '—'}</div><div class="sub">peak ${n0(Math.max(0, ...online.map(h => h.SessionSummary?.Total || 0)))} on one host</div></div>
+  </div>
+  <div class="grid cols-3" style="margin-bottom:12px">
+    <div class="panel"><h3>DEX score — last 24h <span class="hint">hourly fleet average</span></h3><svg class="chart" id="chFleetTrend"></svg><div class="legend"><span><i style="background:var(--s1)"></i>Host score</span><span><i style="background:var(--s3)"></i>Session score</span></div></div>
+    <div class="panel"><h3>Active sessions — last 24h <span class="hint">peak per hour, fleet</span></h3><svg class="chart" id="chSessTrend"></svg></div>
+    <div class="panel"><h3>Logon duration — last 24h <span class="hint">p95 seconds per hour</span></h3><svg class="chart" id="chLogonTrend"></svg></div>
+  </div>
+  <div class="grid cols-3">
+    <div class="panel"><h3>Top issues <span class="hint">grouped by rule</span></h3>${issues.length ? `<ul class="list">${issues.map(i => `<li>${sevChip(i.sev)}<span class="msg" title="${esc(i.fix)}">${esc(i.id.replace(/_/g, ' '))}</span><span class="meta">${i.n} · ${i.targets.size} target${i.targets.size === 1 ? '' : 's'}</span></li>`).join('')}</ul>` : '<div class="empty">No open alerts 🎉</div>'}</div>
+    <div class="panel"><h3>Host stress distribution</h3>${distBar(dist, online.length)}<h3 style="margin-top:14px">Session stress distribution</h3>${distBar(sDist, act.length)}</div>
+    <div class="panel"><h3>Worst hosts</h3><ul class="list">${worstHosts.map(h => `<li data-host="${esc(h.Host)}">${chip(h.Score.Score, h.Score.Stress)}<span class="msg"><b>${esc(h.Host)}</b> <span class="meta">${esc((h.Score.Factors || []).slice(0, 2).join(' · ') || 'no issues')}</span></span><span class="meta">${h.SessionSummary?.Active ?? 0} act</span></li>`).join('') || '<li class="empty">—</li>'}</ul></div>
+    <div class="panel"><h3>Worst sessions</h3><ul class="list">${worstSess.map(s => `<li data-session="${esc(s._host)}|${s.SessionId}">${chip(s.Score.Score, s.Score.Stress)}<span class="msg"><b>${esc(s.UserName)}</b> <span class="meta">${esc(s._host)} · ${esc((s.Score.Factors || []).slice(0, 2).join(' · ') || 'no issues')}</span></span></li>`).join('') || '<li class="empty">—</li>'}</ul></div>
+    <div class="panel"><h3>Slowest logons (current sessions)</h3><ul class="list">${slowLogons.map(s => `<li data-session="${esc(s._host)}|${s.SessionId}"><span class="mono" style="min-width:52px;text-align:right;color:${s.Logon.TotalSec >= T.LogonCrit ? 'var(--crit)' : s.Logon.TotalSec >= T.LogonWarn ? 'var(--warn)' : 'var(--text)'}">${secs(s.Logon.TotalSec)}</span><span class="msg"><b>${esc(s.UserName)}</b> <span class="meta">${esc(s._host)}</span></span><span class="meta">prof ${secs(s.Logon.ProfileLoadSec)} · gpo ${secs(s.Logon.GpoSec)}</span></li>`).join('') || '<li class="empty">no logon data yet</li>'}</ul></div>
+    <div class="panel"><h3>Infrastructure health</h3><ul class="list">
+      <li><span class="msg">AVD agent healthy</span><span class="meta">${online.filter(h => h.AvdAgent?.Healthy).length} / ${online.length}</span></li>
+      <li><span class="msg">FSLogix service running</span><span class="meta">${online.filter(h => h.FsLogix?.Installed && h.FsLogix.ServiceStatus === 'Running').length} / ${online.filter(h => h.FsLogix?.Installed).length} installed</span></li>
+      <li><span class="msg">Pending reboot</span><span class="meta">${online.filter(h => h.Metrics?.PendingReboot).length}</span></li>
+      <li><span class="msg">UDP Shortpath in use (active sessions)</span><span class="meta">${act.filter(s => (s.Transport || '').startsWith('UDP')).length} / ${act.length}</span></li>
+      <li><span class="msg">Input-delay counters enabled</span><span class="meta">${online.filter(h => h.Capabilities?.InputDelayCounters).length} / ${online.length}</span></li>
+      <li><span class="msg">GPU hosts</span><span class="meta">${online.filter(h => h.Metrics?.Gpu).length}</span></li>
+    </ul></div>
+  </div>`;
+}
+function distBar(d, total) {
+  const col = { Healthy: 'var(--good)', Watch: 'var(--warn)', Stressed: 'var(--serious)', Critical: 'var(--crit)' };
+  return `<div class="seg">${d.filter(x => x.n).map(x => `<div style="width:${(x.n / (total || 1)) * 100}%;background:${col[x.k]}" title="${x.k}: ${x.n}"></div>`).join('') || '<div style="width:100%;background:var(--panel-2)"></div>'}</div><div class="legend">${d.map(x => `<span><i style="background:${col[x.k]}"></i>${x.k} ${x.n}</span>`).join('')}</div>`;
+}
+
+// ---------------------------------------------------------------- Hosts
+const hostCols = [
+  { k: 'Host', l: 'Host', v: h => h.Host, f: h => `<b>${esc(h.Host)}</b>${h.Stale ? ' <span class="chip Stale">stale ' + ago(h.Timestamp) + '</span>' : ''}` },
+  { k: 'HostPool', l: 'Pool', v: h => h.HostPool || '', f: h => esc(h.HostPool || '—') },
+  { k: 'Score', l: 'DEX', v: h => h.Score.Score, f: h => chip(h.Score.Score, h.Score.Stress), num: 1 },
+  { k: 'Sessions', l: 'Sessions', v: h => h.SessionSummary?.Total || 0, f: h => `${h.SessionSummary?.Active || 0} <span style="color:var(--muted)">/ ${h.SessionSummary?.Total || 0}</span>`, num: 1 },
+  { k: 'Cpu', l: 'CPU', v: h => h.Metrics.CpuPct, f: h => bar(h.Metrics.CpuPct, T.CpuWarn, T.CpuCrit) + pct(h.Metrics.CpuPct), heat: h => heat(h.Metrics.CpuPct, T.CpuWarn, T.CpuCrit), num: 1 },
+  { k: 'Mem', l: 'Memory', v: h => h.Metrics.MemUsedPct, f: h => bar(h.Metrics.MemUsedPct, T.MemWarn, T.MemCrit) + pct(h.Metrics.MemUsedPct), heat: h => heat(h.Metrics.MemUsedPct, T.MemWarn, T.MemCrit), num: 1 },
+  { k: 'DLat', l: 'Disk lat', v: h => h.Metrics.WorstDiskLatencyMs, f: h => ms(h.Metrics.WorstDiskLatencyMs), heat: h => heat(h.Metrics.WorstDiskLatencyMs, T.DLatWarn, T.DLatCrit), num: 1 },
+  { k: 'Free', l: 'C: free', v: h => h.Metrics.SysDiskFreePct, f: h => pct(h.Metrics.SysDiskFreePct), heat: h => heat(h.Metrics.SysDiskFreePct, T.FreeWarn, T.FreeCrit, true), num: 1 },
+  { k: 'Gpu', l: 'GPU', v: h => h.Metrics.Gpu?.UtilTotalPct, f: h => h.Metrics.Gpu ? pct(h.Metrics.Gpu.UtilTotalPct) : '<span style="color:var(--muted)">—</span>', heat: h => h.Metrics.Gpu ? heat(h.Metrics.Gpu.UtilTotalPct, T.GpuWarn, T.GpuCrit) : '', num: 1 },
+  { k: 'Net', l: 'Net', v: h => h.Metrics.NetBytesPerSec, f: h => h.Metrics.NetBytesPerSec == null ? '—' : (h.Metrics.NetBytesPerSec * 8 / 1e6).toFixed(1) + ' Mb/s', num: 1 },
+  { k: 'Avd', l: 'AVD agent', v: h => h.AvdAgent?.Healthy ? 1 : 0, f: h => h.AvdAgent?.Installed ? (h.AvdAgent.Healthy ? '<span style="color:var(--good)">✓ ok</span>' : '<span style="color:var(--crit)">✗ ' + esc(h.AvdAgent.ServiceStatus) + '</span>') : '<span style="color:var(--muted)">n/a</span>' },
+  { k: 'Fsx', l: 'FSLogix', v: h => h.FsLogix?.ErrorsInInterval || 0, f: h => !h.FsLogix?.Installed ? '<span style="color:var(--muted)">n/a</span>' : h.FsLogix.ServiceStatus !== 'Running' ? '<span style="color:var(--crit)">✗ stopped</span>' : h.FsLogix.ErrorsInInterval ? `<span style="color:var(--warn)">⚠ ${h.FsLogix.ErrorsInInterval} err</span>` : '<span style="color:var(--good)">✓ ok</span>' },
+  { k: 'Up', l: 'Uptime', v: h => h.Metrics.UptimeHours, f: h => hours(h.Metrics.UptimeHours) + (h.Metrics.PendingReboot ? ' <span title="pending reboot">↻</span>' : ''), num: 1 },
+  { k: 'Alerts', l: 'Alerts', v: h => (h.Alerts || []).filter(a => a.Severity !== 'info').length, f: h => { const c = (h.Alerts || []).filter(a => a.Severity === 'critical').length, w = (h.Alerts || []).filter(a => a.Severity === 'warning').length; return (c ? `<span class="sev-crit">${c}</span> ` : '') + (w ? `<span class="sev-warn">${w}</span>` : '') + (!c && !w ? '<span style="color:var(--muted)">0</span>' : ''); }, num: 1 },
+  { k: 'Age', l: 'Sample', v: h => h.AgeSeconds, f: h => ago(h.Timestamp), num: 1 },
+];
+const bar = (v, w, c) => `<span class="bar ${heat(v, w, c) === 'crit' ? 'crit' : heat(v, w, c) === 'warn' ? 'warn' : ''}"><i style="width:${Math.min(100, v || 0)}%"></i></span>`;
+function hostsTab() { return table('hosts', hostCols, hostsView(), h => `data-host="${esc(h.Host)}"`); }
+function table(name, cols, rows, attr) {
+  const [sk, dir] = S.sort[name];
+  const col = cols.find(c => c.k === sk);
+  if (col) rows = [...rows].sort((a, b) => { const x = col.v(a), y = col.v(b); if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1; return (x > y ? 1 : x < y ? -1 : 0) * dir; });
+  return `<div class="tablewrap"><table data-table="${name}"><thead><tr>${cols.map(c => `<th data-k="${c.k}" class="${c.num ? 'num ' : ''}${c.k === sk ? 'sorted ' + (dir > 0 ? 'asc' : '') : ''}">${c.l}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr ${attr(r)}>${cols.map(c => `<td class="${c.num ? 'num ' : ''}${c.heat ? 'heat ' + c.heat(r) : ''}">${c.f(r)}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${cols.length}" class="empty">Nothing matches</td></tr>`}</tbody></table></div>`;
+}
+function wireTables() {
+  $$('table[data-table] th').forEach(th => th.onclick = () => { const t = th.closest('table').dataset.table; const [k, d] = S.sort[t]; S.sort[t] = [th.dataset.k, k === th.dataset.k ? -d : (th.dataset.k === 'Host' || th.dataset.k === 'User' ? 1 : -1)]; render(); });
+  $$('[data-host]').forEach(el => el.onclick = () => openHost(el.dataset.host));
+  $$('[data-session]').forEach(el => el.onclick = () => { const [h, id] = el.dataset.session.split('|'); openSession(h, +id); });
+}
+
+// ---------------------------------------------------------------- Sessions
+const sessCols = [
+  { k: 'User', l: 'User', v: s => s.UserName || '', f: s => `<b>${esc(s.UserName)}</b>` },
+  { k: 'Host', l: 'Host', v: s => s._host, f: s => esc(s._host) + (s._stale ? ' <span class="chip Stale">stale</span>' : '') },
+  { k: 'State', l: 'State', v: s => s.State, f: s => s.State === 'Active' ? '<span style="color:var(--good)">● Active</span>' : `<span style="color:var(--muted)">○ ${esc(s.State)} ${s.IdleMinutes >= 60 ? (s.IdleMinutes / 60).toFixed(1) + 'h' : s.IdleMinutes + 'm'}</span>` },
+  { k: 'Score', l: 'DEX', v: s => s.Score.Score, f: s => chip(s.Score.Score, s.Score.Stress), num: 1 },
+  { k: 'Transport', l: 'Transport', v: s => s.Transport, f: s => `<span style="color:${(s.Transport || '').startsWith('UDP') ? 'var(--good)' : s.Transport === 'TCP' ? 'var(--warn)' : 'var(--muted)'}">${esc(s.Transport || '—')}</span>` },
+  { k: 'Rtt', l: 'RTT', v: s => s.RttMs, f: s => ms(s.RttMs), heat: s => heat(s.RttMs, T.RttWarn, T.RttCrit), num: 1 },
+  { k: 'Lag', l: 'Input delay', v: s => s.InputDelayMaxMs, f: s => ms(s.InputDelayMaxMs), heat: s => heat(s.InputDelayMaxMs, T.LagWarn, T.LagCrit), num: 1 },
+  { k: 'Fps', l: 'FPS', v: s => s.OutputFps, f: s => s.OutputFps == null ? '—' : n0(s.OutputFps) + ((s.FramesSkippedServer || 0) + (s.FramesSkippedNetwork || 0) >= 5 ? ' <span class="sev-warn" title="frames skipped">⚠</span>' : ''), num: 1 },
+  { k: 'Bw', l: 'Bandwidth', v: s => s.BandwidthKbps, f: s => s.BandwidthKbps == null ? '—' : (s.BandwidthKbps >= 1000 ? (s.BandwidthKbps / 1000).toFixed(1) + ' Mb/s' : n0(s.BandwidthKbps) + ' kb/s'), num: 1 },
+  { k: 'Cpu', l: 'CPU', v: s => s.CpuPct, f: s => pct(s.CpuPct), heat: s => heat(s.CpuPct, T.SCpuWarn, T.SCpuCrit), num: 1 },
+  { k: 'Mem', l: 'Memory', v: s => s.MemoryMB, f: s => gb(s.MemoryMB), num: 1 },
+  { k: 'Logon', l: 'Logon', v: s => s.Logon?.TotalSec, f: s => secs(s.Logon?.TotalSec), heat: s => heat(s.Logon?.TotalSec, T.LogonWarn, T.LogonCrit), num: 1 },
+  { k: 'Top', l: 'Top process', v: s => s.TopProcessName || '', f: s => `<span class="mono">${esc(s.TopProcessName || '—')}</span>${s.NotRespondingCount ? ` <span class="sev-warn" title="${esc((s.NotRespondingNames || []).join(', '))}">⚠ hung</span>` : ''}` },
+  { k: 'Fsx', l: 'FSLogix', v: s => s.FsLogix?.Attached ? 1 : 0, f: s => s.FsLogix?.Attached ? '<span style="color:var(--good)">✓</span>' : '<span style="color:var(--muted)">local</span>' },
+  { k: 'LogonTime', l: 'Logged on', v: s => s.LogonTime, f: s => s.LogonTime ? ago(s.LogonTime) : '—', num: 1 },
+];
+function sessionsTab() { return table('sessions', sessCols, sessionsView(), s => `data-session="${esc(s._host)}|${s.SessionId}"`); }
+
+// ---------------------------------------------------------------- Alerts
+function alertsTab() {
+  const al = alertsView().sort((a, b) => sevRank[a.Severity] - sevRank[b.Severity] || a.Host.localeCompare(b.Host));
+  const hist = (S.trends?.AlertHistory || []).filter(a => !S.pool || a.pool === S.pool);
+  const days = {}; hist.forEach(a => { const d = (a.t || '').slice(0, 10); (days[d] ||= { critical: 0, warning: 0, info: 0 })[a.sev] = ((days[d] || {})[a.sev] || 0) + 1; });
+  const dk = Object.keys(days).sort();
+  return `<div class="grid cols-2" style="margin-bottom:12px">
+    <div class="panel"><h3>Alert history <span class="hint">new alerts per day · last ${S.trends?.TrendDays || 7}d</span></h3>${dk.length ? `<svg class="chart" id="chAlertHist"></svg><div class="legend"><span><i style="background:var(--crit)"></i>critical</span><span><i style="background:var(--warn)"></i>warning</span><span><i style="background:var(--s1)"></i>info</span></div>` : '<div class="empty">No alert history yet (written by Merge-AvdDexFleet.ps1)</div>'}</div>
+    <div class="panel"><h3>Most frequent rules <span class="hint">history</span></h3>${(() => { const by = {}; hist.forEach(a => by[a.id] = (by[a.id] || 0) + 1); const e = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 8); const mx = e[0]?.[1] || 1; return e.length ? `<ul class="list">${e.map(([k, n]) => `<li><span class="bar" style="width:120px"><i style="width:${n / mx * 100}%"></i></span><span class="msg">${esc(k.replace(/_/g, ' '))}</span><span class="meta">${n}</span></li>`).join('')}</ul>` : '<div class="empty">—</div>'; })()}</div>
+  </div>
+  <div class="tablewrap"><table><thead><tr><th>Severity</th><th>Rule</th><th>Target</th><th>Pool</th><th>Message</th><th class="num">Value</th><th class="num">Threshold</th><th>Suggested remediation</th><th>Since</th></tr></thead><tbody>
+  ${al.map(a => `<tr ${a.Scope === 'session' ? `data-session="${esc(a.Host)}|${esc(sessionIdFor(a))}"` : `data-host="${esc(a.Host)}"`}><td>${sevChip(a.Severity)}</td><td class="mono">${esc(a.Id)}</td><td><b>${esc(a.Target)}</b></td><td>${esc(a.HostPool || '—')}</td><td style="white-space:normal;min-width:260px">${esc(a.Message)}</td><td class="num">${esc(fmtVal(a.Value))}</td><td class="num">${esc(fmtVal(a.Threshold))}</td><td style="white-space:normal;min-width:220px;color:var(--text-2)">${esc(a.Remediation || '')}</td><td>${ago(a.Time)}</td></tr>`).join('') || '<tr><td colspan="9" class="empty">No open alerts for this filter</td></tr>'}
+  </tbody></table></div>`;
+}
+const fmtVal = v => v == null ? '' : typeof v === 'number' ? (Math.round(v * 10) / 10) : String(v);
+function sessionIdFor(a) { const h = S.fleet.Hosts.find(x => x.Host === a.Host); const u = a.Target.split('@')[0]; const s = (h?.Sessions || []).find(x => x.UserName === u); return s ? s.SessionId : ''; }
+
+// ---------------------------------------------------------------- Reports
+function reportsTab() {
+  const tr = S.trends;
+  if (!tr) return `<div class="empty">Reports need trends.json from Merge-AvdDexFleet.ps1 (or load demo data).</div>`;
+  const range = S.reportRange, hostsSel = hostsView().map(h => h.Host);
+  const daily = Object.entries(tr.Daily || {}).filter(([h]) => hostsSel.includes(h)).flatMap(([h, arr]) => arr.map(d => ({ ...d, host: h })));
+  const dayKeys = [...new Set(daily.map(d => d.d))].sort().slice(-range);
+  const logons = (tr.Logons || []).filter(l => hostsSel.includes(l.host) && (Date.now() - new Date(l.t)) / 864e5 <= range);
+  const slow = [...logons].sort((a, b) => b.lg - a.lg).slice(0, 12);
+  const apps = (tr.Apps || []).slice(0, 12);
+  const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null, p95 = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.ceil(.95 * s.length) - 1)]; };
+  const perUser = {}; logons.forEach(l => (perUser[l.u] ||= []).push(l.lg));
+  const users = Object.entries(perUser).map(([u, a]) => ({ u, n: a.length, avg: avg(a), p95: p95(a) })).sort((a, b) => b.p95 - a.p95).slice(0, 12);
+  const cutoff = Date.now() - range * 864e5;
+  const hostsByScore = Object.entries(tr.Hourly || {}).filter(([h]) => hostsSel.includes(h)).map(([h, arr]) => { const w = arr.filter(x => new Date(x.t) >= cutoff); return { h, score: avg(w.map(x => x.scoreAvg).filter(x => x != null)), cpu: p95(w.map(x => x.cpuP95).filter(x => x != null)), mem: p95(w.map(x => x.memP95).filter(x => x != null)), sess: Math.max(0, ...w.map(x => x.sessMax || 0)), alerts: w.reduce((s, x) => s + (x.alerts || 0), 0), n: w.length }; }).filter(x => x.n).sort((a, b) => (a.score ?? 101) - (b.score ?? 101));
+  return `<div class="grid cols-3" style="margin-bottom:12px">
+    <div class="panel"><h3>DEX score trend <span class="hint">daily avg host score · session score</span></h3><svg class="chart" id="chScoreDaily"></svg><div class="legend"><span><i style="background:var(--s1)"></i>Host score</span><span><i style="background:var(--s3)"></i>Session score</span></div></div>
+    <div class="panel"><h3>Logon duration trend <span class="hint">daily avg &amp; p95, seconds</span></h3><svg class="chart" id="chLogonDaily"></svg><div class="legend"><span><i style="background:var(--s1)"></i>avg</span><span><i style="background:var(--s2)"></i>p95</span></div></div>
+    <div class="panel"><h3>Peak concurrent sessions per day</h3><svg class="chart" id="chSessDaily"></svg></div>
+  </div>
+  <div class="grid cols-2" style="margin-bottom:12px">
+    <div class="panel"><h3>Application usage <span class="hint">foreground-CPU minutes, last ${tr.TrendDays || 7}d</span></h3><svg class="chart tall" id="chApps"></svg></div>
+    <div class="panel"><h3>Host scorecard <span class="hint">last ${range === 1 ? '24h' : range + 'd'}</span><button class="btn small" style="margin-left:8px" onclick="exportCsv('scorecard')">⬇ CSV</button></h3><div class="tablewrap" style="border:0"><table id="scorecard"><thead><tr><th>Host</th><th class="num">Avg DEX</th><th class="num">CPU p95</th><th class="num">Mem p95</th><th class="num">Peak sess</th><th class="num">Alerts</th></tr></thead><tbody>${hostsByScore.map(x => `<tr data-host="${esc(x.h)}"><td><b>${esc(x.h)}</b></td><td class="num">${chip(x.score)}</td><td class="num heat ${heat(x.cpu, T.CpuWarn, T.CpuCrit)}">${pct(x.cpu)}</td><td class="num heat ${heat(x.mem, T.MemWarn, T.MemCrit)}">${pct(x.mem)}</td><td class="num">${x.sess}</td><td class="num">${x.alerts}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">—</td></tr>'}</tbody></table></div></div>
+  </div>
+  <div class="grid cols-2">
+    <div class="panel"><h3>Users with slowest logons <span class="hint">${logons.length} logons in range</span></h3><div class="tablewrap" style="border:0"><table><thead><tr><th>User</th><th class="num">Logons</th><th class="num">Avg</th><th class="num">p95</th></tr></thead><tbody>${users.map(u => `<tr><td><b>${esc(u.u)}</b></td><td class="num">${u.n}</td><td class="num">${secs(u.avg)}</td><td class="num heat ${heat(u.p95, T.LogonWarn, T.LogonCrit)}">${secs(u.p95)}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">—</td></tr>'}</tbody></table></div></div>
+    <div class="panel"><h3>Slowest individual logons</h3><div class="tablewrap" style="border:0"><table><thead><tr><th>When</th><th>User</th><th>Host</th><th class="num">Duration</th></tr></thead><tbody>${slow.map(l => `<tr><td>${new Date(l.t).toLocaleString()}</td><td><b>${esc(l.u)}</b></td><td>${esc(l.host)}</td><td class="num heat ${heat(l.lg, T.LogonWarn, T.LogonCrit)}">${secs(l.lg)}</td></tr>`).join('') || '<tr><td colspan="4" class="empty">—</td></tr>'}</tbody></table></div></div>
+  </div>
+  <script type="application/json" id="reportData">${JSON.stringify({ dayKeys, daily, apps })}<\/script>`;
+}
+
+// ---------------------------------------------------------------- Capacity
+function capacityTab() {
+  const rs = (S.fleet.RightSizing || []).filter(r => (!S.pool || r.HostPool === S.pool) && (!S.search || r.Host.toLowerCase().includes(S.search)));
+  if (!rs.length) return '<div class="empty">Right-sizing needs a few hours of history + Merge-AvdDexFleet.ps1 output (or load demo data).</div>';
+  const col = s => s.startsWith('Scale') ? 'var(--crit)' : s.startsWith('Down') ? 'var(--s1)' : s.startsWith('Idle') ? 'var(--s7)' : s.startsWith('Insuff') ? 'var(--muted)' : 'var(--good)';
+  const counts = {}; rs.forEach(r => counts[r.Suggestion] = (counts[r.Suggestion] || 0) + 1);
+  return `<div class="grid kpis" style="margin-bottom:12px">${Object.entries(counts).map(([k, n]) => `<div class="tile"><div class="label">${esc(k)}</div><div class="value" style="color:${col(k)}">${n}</div><div class="sub">host${n === 1 ? '' : 's'}</div></div>`).join('')}</div>
+  <div class="panel" style="margin-bottom:12px"><h3>Utilization envelope <span class="hint">P95 CPU vs P95 memory over the trend window · bubble = peak sessions</span></h3><svg class="chart tall" id="chCapacity"></svg></div>
+  <div class="tablewrap"><table><thead><tr><th>Host</th><th>Pool</th><th class="num">vCPU</th><th class="num">RAM</th><th class="num">CPU p95</th><th class="num">CPU p95 (busy hrs)</th><th class="num">Mem p95</th><th class="num">Peak sess</th><th class="num">Avg sess</th><th class="num">GB / session</th><th>Suggestion</th><th>Why</th></tr></thead><tbody>
+  ${rs.map(r => `<tr data-host="${esc(r.Host)}"><td><b>${esc(r.Host)}</b></td><td>${esc(r.HostPool || '—')}</td><td class="num">${r.Cores ?? '—'}</td><td class="num">${r.MemGB ?? '—'} GB</td><td class="num heat ${heat(r.CpuP95, 70, 85)}">${pct(r.CpuP95)}</td><td class="num">${pct(r.CpuP95Busy)}</td><td class="num heat ${heat(r.MemP95, 75, 88)}">${pct(r.MemP95)}</td><td class="num">${r.PeakSessions ?? '—'}</td><td class="num">${n1(r.AvgSessions)}</td><td class="num">${r.MemPerSessionGB ?? '—'}</td><td style="color:${col(r.Suggestion)};font-weight:600">${esc(r.Suggestion)}</td><td style="white-space:normal;min-width:260px;color:var(--text-2)">${esc(r.Reason)}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+// ============================================================================================
+// Drawers (root-cause views)
+// ============================================================================================
+function openDrawer(html) { $('#drawer').innerHTML = `<button class="btn small close" onclick="closeDrawer()">✕</button>` + html; $('#drawer').classList.add('open'); $('#overlay').classList.add('open'); }
+function closeDrawer() { $('#drawer').classList.remove('open'); $('#overlay').classList.remove('open'); }
+$('#overlay').onclick = closeDrawer;
+
+function openHost(name) {
+  const h = S.fleet.Hosts.find(x => x.Host === name); if (!h) return;
+  const m = h.Metrics, hr = (S.trends?.Hourly?.[name] || []).slice(-24);
+  const kv = [['Pool', h.HostPool || '—'], ['OS', `${m.OsCaption || ''} ${m.OsBuild || ''}`], ['Size', `${m.Cores} vCPU · ${gb(m.TotalMemoryMB)}${m.Gpu ? ' · GPU' : ''}`], ['CPU', pct(m.CpuPct) + ` (queue ${n1(m.CpuQueuePerCore)}/core)`], ['Memory', `${pct(m.MemUsedPct)} · ${gb(m.MemAvailableMB)} free · commit ${pct(m.MemCommittedPct)}`], ['Paging', n0(m.PagesPerSec) + '/s'], ['Disk latency', ms(m.WorstDiskLatencyMs)], ['C: free', pct(m.SysDiskFreePct)], ['Network', m.NetBytesPerSec == null ? '—' : (m.NetBytesPerSec * 8 / 1e6).toFixed(1) + ' Mb/s · retx ' + n1(m.TcpRetransmitsPerSec) + '/s'], ['GPU', m.Gpu ? `${pct(m.Gpu.UtilTotalPct)} (3D ${pct(m.Gpu.Util3dPct)}) · ${gb(m.Gpu.DedicatedMemMB)} dedicated` : 'none'], ['Uptime', hours(m.UptimeHours) + (m.PendingReboot ? ' · pending reboot (' + (m.PendingRebootReasons || []).join(', ') + ')' : '')], ['AVD agent', h.AvdAgent?.Installed ? `${h.AvdAgent.ServiceStatus} · v${h.AvdAgent.Version || '?'} · registered ${h.AvdAgent.Registered}` : 'not installed'], ['FSLogix', h.FsLogix?.Installed ? `${h.FsLogix.ServiceStatus} · v${h.FsLogix.Version || '?'} · ${h.FsLogix.ErrorsInInterval || 0} errors` : 'not installed'], ['Interval events', `${h.Events?.Disconnects || 0} disconnects · ${h.Events?.Reconnects || 0} reconnects · ${(h.Events?.AppCrashes || []).length} crashes · ${(h.Events?.AppHangs || []).length} hangs`], ['Collected', `${ago(h.Timestamp)} · ${h.CollectionMs} ms · agent v${h.AgentVersion}`]];
+  openDrawer(`<h2>${esc(h.Host)} ${chip(h.Score.Score, h.Score.Stress)} ${h.Stale ? '<span class="chip Stale">stale</span>' : ''}</h2>
+  <div style="color:var(--text-2)">Host DEX score · avg session score ${n0(h.Score.AvgSessionScore)}</div>
+  ${(h.Score.Factors || []).length ? `<h4>Why this score</h4><div class="factors">${h.Score.Factors.map(f => `<span>${esc(f)}</span>`).join('')}</div>` : ''}
+  ${hr.length ? `<h4>Last 24h</h4><div class="grid cols-2" style="gap:8px">${[['Score', 'scoreAvg', 100], ['CPU %', 'cpuP95', 100], ['Memory %', 'memP95', 100], ['Sessions', 'sessMax', null], ['Disk latency ms', 'dlatP95', null], ['Session RTT p95', 'rttP95', null]].map(([l, k, mx]) => `<div><div style="font-size:11px;color:var(--muted)">${l} <span style="float:right;color:var(--text)">${n1(hr[hr.length - 1][k])}</span></div><svg class="spark" data-spark="${k}" data-max="${mx || ''}"></svg></div>`).join('')}</div>` : '<h4>Last 24h</h4><div class="empty" style="padding:8px">no trend data (needs trends.json)</div>'}
+  <h4>Details</h4><div class="kv">${kv.map(([k, v]) => `<div><span>${k}</span>${esc(v)}</div>`).join('')}</div>
+  ${(m.Disks || []).length ? `<h4>Disks</h4><div class="tablewrap"><table><thead><tr><th>Drive</th><th class="num">Free</th><th class="num">Read lat</th><th class="num">Write lat</th><th class="num">Queue</th><th class="num">IOPS</th></tr></thead><tbody>${m.Disks.map(d => `<tr style="cursor:default"><td>${esc(d.Drive)}</td><td class="num heat ${heat(d.FreePct, T.FreeWarn, T.FreeCrit, true)}">${pct(d.FreePct)}</td><td class="num heat ${heat(d.ReadLatencyMs, T.DLatWarn, T.DLatCrit)}">${ms(d.ReadLatencyMs)}</td><td class="num heat ${heat(d.WriteLatencyMs, T.DLatWarn, T.DLatCrit)}">${ms(d.WriteLatencyMs)}</td><td class="num">${n1(d.QueueLength)}</td><td class="num">${n0(d.Iops)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+  <h4>Open alerts (${(h.Alerts || []).length})</h4>${(h.Alerts || []).length ? `<ul class="list">${h.Alerts.map(a => `<li>${sevChip(a.Severity)}<span class="msg" style="white-space:normal"><b>${esc(a.Target)}</b> — ${esc(a.Message)}<div class="meta">↳ ${esc(a.Remediation || '')}</div></span></li>`).join('')}</ul>` : '<div class="meta">none</div>'}
+  <h4>Sessions (${(h.Sessions || []).length})</h4><div class="tablewrap"><table><thead><tr><th>User</th><th>State</th><th class="num">DEX</th><th class="num">RTT</th><th class="num">Input delay</th><th class="num">CPU</th><th class="num">Mem</th><th class="num">Logon</th><th>Top</th></tr></thead><tbody>${(h.Sessions || []).map(s => `<tr data-session="${esc(h.Host)}|${s.SessionId}"><td><b>${esc(s.UserName)}</b></td><td>${esc(s.State)}</td><td class="num">${chip(s.Score.Score, s.Score.Stress)}</td><td class="num heat ${heat(s.RttMs, T.RttWarn, T.RttCrit)}">${ms(s.RttMs)}</td><td class="num heat ${heat(s.InputDelayMaxMs, T.LagWarn, T.LagCrit)}">${ms(s.InputDelayMaxMs)}</td><td class="num heat ${heat(s.CpuPct, T.SCpuWarn, T.SCpuCrit)}">${pct(s.CpuPct)}</td><td class="num">${gb(s.MemoryMB)}</td><td class="num heat ${heat(s.Logon?.TotalSec, T.LogonWarn, T.LogonCrit)}">${secs(s.Logon?.TotalSec)}</td><td class="mono">${esc(s.TopProcessName || '')}</td></tr>`).join('') || '<tr><td colspan="9" class="empty">no sessions</td></tr>'}</tbody></table></div>
+  <h4>Top processes (host)</h4><div class="tablewrap"><table><thead><tr><th>Process</th><th class="num">PID</th><th>User</th><th class="num">Session</th><th class="num">CPU</th><th class="num">Memory</th></tr></thead><tbody>${(h.TopProcesses || []).map(p => `<tr style="cursor:default"><td class="mono">${esc(p.Name)}</td><td class="num">${p.Pid}</td><td>${esc(p.UserName || '')}</td><td class="num">${p.SessionId}</td><td class="num heat ${heat(p.CpuPct, 25, 50)}">${pct(p.CpuPct)}</td><td class="num">${n0(p.WorkingSetMB)} MB</td></tr>`).join('')}</tbody></table></div>
+  ${h.SyntheticProbe ? `<h4>Synthetic logon probe</h4><pre class="mono" style="white-space:pre-wrap;color:var(--text-2)">${esc(JSON.stringify(h.SyntheticProbe, null, 1))}</pre>` : ''}`);
+  $$('#drawer [data-session]').forEach(el => el.onclick = () => { const [hh, id] = el.dataset.session.split('|'); openSession(hh, +id); });
+  $$('#drawer svg[data-spark]').forEach(svg => sparkline(svg, hr.map(x => x[svg.dataset.spark]), svg.dataset.max ? +svg.dataset.max : null));
+}
+
+function openSession(hostName, id) {
+  const h = S.fleet.Hosts.find(x => x.Host === hostName); const s = h?.Sessions?.find(x => x.SessionId === id); if (!s) return;
+  const lg = s.Logon || {}; const parts = [['Profile load', lg.ProfileLoadSec, 'var(--s1)'], ['Group Policy', lg.GpoSec, 'var(--s2)'], ['FSLogix attach', lg.FsLogixSec, 'var(--s3)'], ['Shell / other', lg.ShellSec, 'var(--s4)']].filter(p => p[1] != null && p[1] > 0);
+  const known = parts.reduce((a, p) => a + p[1], 0), total = lg.TotalSec || known;
+  const kv = [['Host', `${h.Host} (${h.HostPool || '—'})`], ['Session', `#${s.SessionId} · ${s.SessionName || ''} · ${s.State}`], ['Idle', s.IdleMinutes + ' min'], ['Logged on', s.LogonTime ? new Date(s.LogonTime).toLocaleString() : '—'], ['Transport', s.Transport || '—'], ['RTT', `${ms(s.RttMs)} (TCP ${ms(s.TcpRttMs)} · UDP ${ms(s.UdpRttMs)})`], ['Bandwidth', s.BandwidthKbps == null ? '—' : n0(s.BandwidthKbps) + ' kb/s avail · sending ' + n0(s.SentKbps) + ' kb/s'], ['Loss', s.LossRate == null ? '—' : n1(s.LossRate) + '%'], ['Input delay', `max ${ms(s.InputDelayMaxMs)} · avg ${ms(s.InputDelayAvgMs)}`], ['Graphics', `${n0(s.OutputFps)} fps out / ${n0(s.InputFps)} in · encode ${ms(s.EncodingTimeMs)}`], ['Frames skipped', `server ${n1(s.FramesSkippedServer)} · network ${n1(s.FramesSkippedNetwork)} · client ${n1(s.FramesSkippedClient)} /s`], ['CPU / memory', `${pct(s.CpuPct)} of host · ${gb(s.MemoryMB)} · ${s.ProcessCount} processes`], ['FSLogix', s.FsLogix?.Attached ? `attached · ${s.FsLogix.VhdPath || s.FsLogix.ProfilePath || ''}` : 'local profile'], ['SID', s.Sid || '—']];
+  openDrawer(`<h2>${esc(s.UserName)} ${chip(s.Score.Score, s.Score.Stress)}</h2><div style="color:var(--text-2)">on <a href="#" onclick="openHost('${esc(h.Host)}');return false">${esc(h.Host)}</a> ${chip(h.Score.Score, h.Score.Stress)}</div>
+  ${(s.Score.Factors || []).length ? `<h4>Why this score</h4><div class="factors">${s.Score.Factors.map(f => `<span>${esc(f)}</span>`).join('')}</div>` : ''}
+  <h4>Logon breakdown — ${secs(lg.TotalSec)} <span style="font-weight:400;text-transform:none;color:var(--muted)">(${esc(lg.Method || 'n/a')})</span></h4>
+  ${total ? `<div class="seg">${parts.map(p => `<div style="width:${p[1] / total * 100}%;background:${p[2]}" title="${p[0]}: ${secs(p[1])}"></div>`).join('')}${known < total ? `<div style="width:${(total - known) / total * 100}%;background:var(--border-2)" title="unattributed"></div>` : ''}</div><div class="legend">${parts.map(p => `<span><i style="background:${p[2]}"></i>${p[0]} ${secs(p[1])}</span>`).join('')}${known < total ? `<span><i style="background:var(--border-2)"></i>unattributed ${secs(total - known)}</span>` : ''}</div><div class="meta" style="margin-top:4px;color:var(--muted)">Profile and FSLogix phases overlap; GPO runs in parallel with profile load. Segments show measured spans, not a strict sequence.</div>` : '<div class="meta">no logon timing captured for this session</div>'}
+  <h4>Details</h4><div class="kv">${kv.map(([k, v]) => `<div><span>${k}</span>${esc(v)}</div>`).join('')}</div>
+  <h4>Top processes</h4><div class="tablewrap"><table><thead><tr><th>Process</th><th class="num">PID</th><th class="num">CPU</th><th class="num">Memory</th><th>State</th></tr></thead><tbody>${(s.TopProcesses || []).map(p => `<tr style="cursor:default"><td class="mono">${esc(p.Name)}</td><td class="num">${p.Pid}</td><td class="num heat ${heat(p.CpuPct, 25, 50)}">${pct(p.CpuPct)}</td><td class="num">${n0(p.WorkingSetMB)} MB</td><td>${p.Responding === false ? '<span class="sev-crit">not responding</span>' : '<span style="color:var(--muted)">ok</span>'}</td></tr>`).join('')}</tbody></table></div>
+  <h4>Alerts for this session</h4>${(() => { const al = (h.Alerts || []).filter(a => a.Target === `${s.UserName}@${h.Host}`); return al.length ? `<ul class="list">${al.map(a => `<li>${sevChip(a.Severity)}<span class="msg" style="white-space:normal">${esc(a.Message)}<div class="meta">↳ ${esc(a.Remediation || '')}</div></span></li>`).join('')}</ul>` : '<div class="meta">none</div>'; })()}`);
+}
+
+// ============================================================================================
+// Charts - dependency-free SVG with hover
+// ============================================================================================
+const tip = $('#tooltip');
+function showTip(e, html) { tip.innerHTML = html; tip.style.display = 'block'; const w = tip.offsetWidth, hgt = tip.offsetHeight; tip.style.left = Math.min(window.innerWidth - w - 8, e.clientX + 14) + 'px'; tip.style.top = Math.min(window.innerHeight - hgt - 8, e.clientY + 14) + 'px'; }
+function hideTip() { tip.style.display = 'none'; }
+const svgNS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs, parent) { const e = document.createElementNS(svgNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function chartBox(svg) { const r = svg.getBoundingClientRect(); const W = Math.max(200, r.width || 400), H = Math.max(120, r.height || 220); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.innerHTML = ''; return { W, H, p: { l: 40, r: 12, t: 10, b: 24 } }; }
+function niceMax(v) { if (!v || v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))); const n = v / p; const m = n <= 1 ? 1 : n <= 2 ? 2 : n <= 3 ? 3 : n <= 4 ? 4 : n <= 5 ? 5 : n <= 6 ? 6 : n <= 8 ? 8 : 10; return m * p; }
+function yAxis(svg, b, max, fmt = v => n0(v)) { const g = el('g', { class: 'grid' }, svg); for (let i = 0; i <= 4; i++) { const y = b.p.t + (b.H - b.p.t - b.p.b) * (1 - i / 4); el('line', { x1: b.p.l, x2: b.W - b.p.r, y1: y, y2: y }, g); const t = el('text', { x: b.p.l - 6, y: y + 4, 'text-anchor': 'end' }, svg); t.textContent = fmt(max * i / 4); } }
+// Multi-series line/bar chart over categorical x. series: [{name,data:[..],color,type:'line'|'bar'}]
+function lineChart(svg, labels, series, { ymax, fmt, xfmt } = {}) {
+  const b = chartBox(svg); const n = labels.length; if (!n) { const t = el('text', { x: b.W / 2, y: b.H / 2, 'text-anchor': 'middle' }, svg); t.textContent = 'no data'; return; }
+  const max = ymax || niceMax(Math.max(1, ...series.flatMap(s => s.data.filter(v => v != null)))); yAxis(svg, b, max, fmt);
+  const iw = b.W - b.p.l - b.p.r, ih = b.H - b.p.t - b.p.b, x = i => b.p.l + (i + 0.5) * iw / n, y = v => b.p.t + ih * (1 - Math.min(v, max) / max);
+  const bars = series.filter(s => s.type === 'bar'); const bw = Math.max(2, iw / n * 0.6 / (bars.length || 1));
+  bars.forEach((s, bi) => s.data.forEach((v, i) => { if (v == null) return; const h = ih * Math.min(v, max) / max; el('rect', { x: x(i) - bw * bars.length / 2 + bi * bw + 1, y: y(v), width: Math.max(1, bw - 2), height: h, fill: s.color, rx: 2 }, svg); }));
+  series.filter(s => s.type !== 'bar').forEach(s => { let d = ''; s.data.forEach((v, i) => { if (v == null) { d += ' '; return; } d += (d.endsWith(' ') || !d ? 'M' : 'L') + x(i).toFixed(1) + ',' + y(v).toFixed(1); }); el('path', { d: d.trim(), fill: 'none', stroke: s.color, 'stroke-width': 2, 'stroke-linejoin': 'round' }, svg); });
+  const step = Math.max(1, Math.ceil(n / Math.floor(iw / 60)));
+  labels.forEach((l, i) => { if (i % step) return; const t = el('text', { x: x(i), y: b.H - 6, 'text-anchor': 'middle' }, svg); t.textContent = xfmt ? xfmt(l) : l; });
+  const cross = el('line', { y1: b.p.t, y2: b.H - b.p.b, stroke: 'var(--text-2)', 'stroke-dasharray': '3,3', style: 'display:none' }, svg);
+  const dots = series.map(s => el('circle', { r: 4, fill: s.color, stroke: 'var(--surface)', 'stroke-width': 2, style: 'display:none' }, svg));
+  svg.onmousemove = e => { const r = svg.getBoundingClientRect(); const px = (e.clientX - r.left) * b.W / r.width; const i = Math.max(0, Math.min(n - 1, Math.floor((px - b.p.l) / (iw / n)))); cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.style.display = ''; series.forEach((s, k) => { const v = s.data[i]; if (v == null) { dots[k].style.display = 'none'; return; } dots[k].setAttribute('cx', x(i)); dots[k].setAttribute('cy', y(v)); dots[k].style.display = ''; }); showTip(e, `<b>${esc(xfmt ? xfmt(labels[i], true) : labels[i])}</b>` + series.map(s => `<div><i style="display:inline-block;width:8px;height:8px;background:${s.color};border-radius:2px;margin-right:5px"></i>${esc(s.name)}: <b>${s.data[i] == null ? '—' : (fmt || n1)(s.data[i])}</b></div>`).join('')); };
+  svg.onmouseleave = () => { cross.style.display = 'none'; dots.forEach(d => d.style.display = 'none'); hideTip(); };
+}
+function hbarChart(svg, items, { color = 'var(--s1)', fmt = n0 } = {}) {
+  const r = svg.getBoundingClientRect(); const W = Math.max(200, r.width || 400), rowH = 22, H = Math.max(60, items.length * rowH + 10); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.style.height = H + 'px'; svg.innerHTML = '';
+  if (!items.length) { const t = el('text', { x: W / 2, y: 30, 'text-anchor': 'middle' }, svg); t.textContent = 'no data'; return; }
+  const max = Math.max(1, ...items.map(i => i.v)), lw = Math.min(160, W * 0.32), bw = W - lw - 90;
+  items.forEach((it, i) => { const y = 6 + i * rowH; const t = el('text', { x: lw - 8, y: y + 14, 'text-anchor': 'end' }, svg); t.textContent = it.l.length > 22 ? it.l.slice(0, 21) + '…' : it.l; const rc = el('rect', { x: lw, y: y + 3, width: Math.max(2, bw * it.v / max), height: rowH - 8, fill: it.color || color, rx: 3 }, svg); const v = el('text', { x: lw + Math.max(2, bw * it.v / max) + 6, y: y + 14 }, svg); v.textContent = fmt(it.v); rc.onmousemove = e => showTip(e, `<b>${esc(it.l)}</b><div>${esc(it.sub || fmt(it.v))}</div>`); rc.onmouseleave = hideTip; });
+}
+function stackedDayChart(svg, days, series) { lineChart(svg, days, series.map(s => ({ ...s, type: 'bar' })), { fmt: n0, xfmt: d => d.slice(5) }); }
+function sparkline(svg, data, max) {
+  const r = svg.getBoundingClientRect(); const W = Math.max(100, r.width || 200), H = 46; svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.innerHTML = '';
+  const vals = data.filter(v => v != null); if (!vals.length) return; const mx = max || niceMax(Math.max(...vals)), n = data.length;
+  let d = ''; data.forEach((v, i) => { if (v == null) return; const x = n === 1 ? W / 2 : i * (W - 4) / (n - 1) + 2, y = 4 + (H - 8) * (1 - Math.min(v, mx) / mx); d += (d ? 'L' : 'M') + x.toFixed(1) + ',' + y.toFixed(1); });
+  el('path', { d: d + ` L${(W - 2).toFixed(1)},${H - 2} L2,${H - 2} Z`, fill: 'var(--s1)', opacity: .12 }, svg); el('path', { d, fill: 'none', stroke: 'var(--s1)', 'stroke-width': 1.5 }, svg);
+}
+function scatterChart(svg, pts) {
+  const b = chartBox(svg); b.p.l = 44; b.p.b = 28; b.p.t = 24; b.p.r = 28; const iw = b.W - b.p.l - b.p.r, ih = b.H - b.p.t - b.p.b; yAxis(svg, b, 100, v => v + '%');
+  const x = v => b.p.l + iw * Math.min(100, v) / 100, y = v => b.p.t + ih * (1 - Math.min(100, v) / 100);
+  [[x(85), b.p.t, x(85), b.H - b.p.b], [b.p.l, y(88), b.W - b.p.r, y(88)]].forEach(([x1, y1, x2, y2]) => el('line', { x1, y1, x2, y2, stroke: 'var(--crit)', 'stroke-dasharray': '4,4', opacity: .6 }, svg));
+  [[x(35), b.p.t, x(35), b.H - b.p.b], [b.p.l, y(50), b.W - b.p.r, y(50)]].forEach(([x1, y1, x2, y2]) => el('line', { x1, y1, x2, y2, stroke: 'var(--s1)', 'stroke-dasharray': '4,4', opacity: .6 }, svg));
+  [0, 25, 50, 75, 100].forEach(v => { const t = el('text', { x: x(v), y: b.H - 8, 'text-anchor': 'middle' }, svg); t.textContent = v + '%'; });
+  const xl = el('text', { x: b.W / 2, y: b.H - 0, 'text-anchor': 'middle', style: 'font-size:10px' }, svg); xl.textContent = 'CPU p95 →'; const yl = el('text', { x: b.p.l, y: 12, style: 'font-size:10px' }, svg); yl.textContent = 'Memory p95 ↑ · dashed red = scale-up thresholds · dashed blue = downsize thresholds';
+  const mxs = Math.max(1, ...pts.map(p => p.s || 0));
+  pts.filter(p => p.cpu != null && p.mem != null).forEach(p => { const c = el('circle', { cx: x(p.cpu), cy: y(p.mem), r: 5 + 10 * Math.sqrt((p.s || 0) / mxs), fill: p.color, opacity: .75, stroke: 'var(--surface)', 'stroke-width': 1.5 }, svg); c.style.cursor = 'pointer'; c.onmousemove = e => showTip(e, `<b>${esc(p.h)}</b><div>CPU p95 ${pct(p.cpu)} · Mem p95 ${pct(p.mem)}</div><div>peak ${p.s} sessions · ${esc(p.sug)}</div>`); c.onmouseleave = hideTip; c.onclick = () => openHost(p.h); if (p.sug !== 'Right-sized' || pts.length <= 8) { const t = el('text', { x: x(p.cpu) + 8, y: y(p.mem) + 4, style: 'font-size:10px' }, svg); t.textContent = p.h; } });
+}
+
+function drawCharts() {
+  const tr = S.trends, hostsSel = hostsView().map(h => h.Host), hourly = Object.entries(tr?.Hourly || {}).filter(([h]) => hostsSel.includes(h));
+  const hourKeys = [...new Set(hourly.flatMap(([, a]) => a.map(x => x.t)))].sort().slice(-24);
+  const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null, p95 = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.ceil(.95 * s.length) - 1)]; };
+  const hourFmt = (t, long) => { const d = new Date(t); return long ? d.toLocaleString([], { weekday: 'short', hour: 'numeric' }) : d.toLocaleTimeString([], { hour: 'numeric' }); };
+  if ($('#chFleetTrend')) {
+    const data = hourKeys.map(k => avg(hourly.map(([, a]) => a.find(x => x.t === k)?.scoreAvg).filter(v => v != null)));
+    const sdata = hourKeys.map(k => avg(hourly.map(([, a]) => a.find(x => x.t === k)?.sscoreAvg).filter(v => v != null)));
+    lineChart($('#chFleetTrend'), hourKeys, [{ name: 'Host score', data, color: 'var(--s1)' }, { name: 'Session score', data: sdata, color: 'var(--s3)' }], { ymax: 100, fmt: n0, xfmt: hourFmt });
+  }
+  if ($('#chSessTrend')) {
+    const sess = hourKeys.map(k => hourly.reduce((s, [, a]) => s + (a.find(x => x.t === k)?.actMax || 0), 0));
+    const lg = hourKeys.map(k => { const d = new Date(k); const l = (tr?.Logons || []).filter(x => hostsSel.includes(x.host) && Math.abs(new Date(x.t) - d) < 36e5 && new Date(x.t) >= d).map(x => x.lg); return p95(l); });
+    lineChart($('#chSessTrend'), hourKeys, [{ name: 'Active sessions', data: sess, color: 'var(--s1)', type: 'bar' }], { fmt: n0, xfmt: hourFmt });
+    lineChart($('#chLogonTrend'), hourKeys, [{ name: 'Logon p95', data: lg, color: 'var(--s2)' }], { fmt: v => n0(v) + 's', xfmt: hourFmt });
+  }
+  if ($('#chAlertHist')) {
+    const hist = (tr?.AlertHistory || []).filter(a => !S.pool || a.pool === S.pool); const days = {}; hist.forEach(a => { const d = (a.t || '').slice(0, 10); days[d] ||= { critical: 0, warning: 0, info: 0 }; days[d][a.sev] = (days[d][a.sev] || 0) + 1; }); const dk = Object.keys(days).sort();
+    lineChart($('#chAlertHist'), dk, [{ name: 'critical', data: dk.map(d => days[d].critical), color: 'var(--crit)', type: 'bar' }, { name: 'warning', data: dk.map(d => days[d].warning), color: 'var(--warn)', type: 'bar' }, { name: 'info', data: dk.map(d => days[d].info), color: 'var(--s1)', type: 'bar' }], { fmt: n0, xfmt: d => d.slice(5) });
+  }
+  const rd = $('#reportData'); if (rd) {
+    const { dayKeys, daily, apps } = JSON.parse(rd.textContent); const byDay = k => daily.filter(d => d.d === k);
+    lineChart($('#chScoreDaily'), dayKeys, [{ name: 'Host score', data: dayKeys.map(k => avg(byDay(k).map(d => d.scoreAvg).filter(v => v != null))), color: 'var(--s1)' }, { name: 'Session score', data: dayKeys.map(k => avg(byDay(k).map(d => d.sscoreAvg).filter(v => v != null))), color: 'var(--s3)' }], { ymax: 100, fmt: n0, xfmt: d => d.slice(5) });
+    lineChart($('#chLogonDaily'), dayKeys, [{ name: 'avg', data: dayKeys.map(k => avg(byDay(k).map(d => d.logonAvg).filter(v => v != null))), color: 'var(--s1)' }, { name: 'p95', data: dayKeys.map(k => Math.max(0, ...byDay(k).map(d => d.logonP95 || 0)) || null), color: 'var(--s2)' }], { fmt: v => n0(v) + 's', xfmt: d => d.slice(5) });
+    lineChart($('#chSessDaily'), dayKeys, [{ name: 'Peak sessions', data: dayKeys.map(k => byDay(k).reduce((s, d) => s + (d.sessMax || 0), 0)), color: 'var(--s1)', type: 'bar' }], { fmt: n0, xfmt: d => d.slice(5) });
+    hbarChart($('#chApps'), apps.map(a => ({ l: a.name, v: a.minutes, sub: `${n0(a.minutes)} min · ${a.users} users` })), { fmt: v => n0(v) + ' min' });
+  }
+  if ($('#chCapacity')) {
+    const rs = (S.fleet.RightSizing || []).filter(r => (!S.pool || r.HostPool === S.pool) && r.CpuP95 != null);
+    const col = s => s.startsWith('Scale') ? 'var(--crit)' : s.startsWith('Down') ? 'var(--s1)' : s.startsWith('Idle') ? 'var(--s7)' : 'var(--good)';
+    scatterChart($('#chCapacity'), rs.map(r => ({ h: r.Host, cpu: r.CpuP95, mem: r.MemP95, s: r.PeakSessions, sug: r.Suggestion, color: col(r.Suggestion) })));
+  }
+}
+
+// ============================================================================================
+// CSV export
+// ============================================================================================
+function exportCsv(kind) {
+  let rows = [], name = kind;
+  if (kind === 'hosts') rows = hostsView().map(h => ({ Host: h.Host, Pool: h.HostPool, Score: h.Score.Score, Stress: h.Score.Stress, Sessions: h.SessionSummary?.Total, Active: h.SessionSummary?.Active, CpuPct: h.Metrics.CpuPct, MemPct: h.Metrics.MemUsedPct, DiskLatencyMs: h.Metrics.WorstDiskLatencyMs, SysDiskFreePct: h.Metrics.SysDiskFreePct, GpuPct: h.Metrics.Gpu?.UtilTotalPct, AvdAgentHealthy: h.AvdAgent?.Healthy, FsLogixStatus: h.FsLogix?.ServiceStatus, UptimeHours: h.Metrics.UptimeHours, PendingReboot: h.Metrics.PendingReboot, Alerts: (h.Alerts || []).length, Factors: (h.Score.Factors || []).join('; '), Timestamp: h.Timestamp }));
+  if (kind === 'sessions') rows = sessionsView().map(s => ({ User: s.UserName, Host: s._host, Pool: s._pool, State: s.State, Score: s.Score.Score, Stress: s.Score.Stress, Transport: s.Transport, RttMs: s.RttMs, InputDelayMaxMs: s.InputDelayMaxMs, OutputFps: s.OutputFps, BandwidthKbps: s.BandwidthKbps, CpuPct: s.CpuPct, MemoryMB: s.MemoryMB, LogonSec: s.Logon?.TotalSec, ProfileLoadSec: s.Logon?.ProfileLoadSec, GpoSec: s.Logon?.GpoSec, FsLogixSec: s.Logon?.FsLogixSec, TopProcess: s.TopProcessName, NotResponding: (s.NotRespondingNames || []).join('; '), Factors: (s.Score.Factors || []).join('; '), LogonTime: s.LogonTime }));
+  if (kind === 'alerts') rows = alertsView().map(a => ({ Severity: a.Severity, Rule: a.Id, Host: a.Host, Pool: a.HostPool, Target: a.Target, Message: a.Message, Metric: a.Metric, Value: a.Value, Threshold: a.Threshold, Remediation: a.Remediation, Time: a.Time }));
+  if (kind === 'scorecard') rows = $$('#scorecard tbody tr').map(tr => { const c = $$('td', tr).map(td => td.textContent.trim()); return { Host: c[0], AvgDEX: c[1].replace(/[A-Za-z]/g, ''), CpuP95: c[2], MemP95: c[3], PeakSessions: c[4], Alerts: c[5] }; });
+  if (!rows.length) return;
+  const cols = Object.keys(rows[0]); const q = v => { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  const csv = [cols.join(','), ...rows.map(r => cols.map(c => q(r[c])).join(','))].join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `avddex-${name}-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.csv`; a.click();
+}
+
+// ============================================================================================
+// Demo data (synthetic, deterministic) - exercises every view
+// ============================================================================================
+function demoData() {
+  let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1)); const rf = (a, b) => a + rnd() * (b - a); const pick = a => a[ri(0, a.length - 1)];
+  const now = new Date(); now.setSeconds(0, 0);
+  const pools = [{ name: 'CAD-POOL', n: 6, gpu: true, cores: 16, mem: 110 * 1024, apps: ['MicroStation', 'OpenRoadsDesigner', 'acad', 'Civil3D', 'ProjectWise', 'EXCEL', 'OUTLOOK', 'chrome'] }, { name: 'OFFICE-POOL', n: 5, gpu: false, cores: 8, mem: 32 * 1024, apps: ['EXCEL', 'WINWORD', 'OUTLOOK', 'msedge', 'Teams', 'chrome', 'POWERPNT', 'Acrobat'] }];
+  const users = ['jsmith', 'mgarcia', 'tnguyen', 'rpatel', 'kjohnson', 'lwilliams', 'bmartin', 'cdavis', 'alee', 'pbrown', 'swilson', 'dmoore', 'htaylor', 'eanderson', 'jthomas', 'mjackson', 'rwhite', 'kharris', 'bclark', 'slewis', 'cwalker', 'ahall', 'jallen', 'myoung', 'dking', 'lwright', 'escott', 'ngreen', 'tbaker', 'radams', 'cnelson', 'jhill', 'bcampbell', 'smitchell', 'droberts', 'kcarter', 'aphillips', 'jevans', 'mturner', 'ltorres'];
+  let ui = 0; const hosts = [], hourly = {}, daily = {}, logons = [], alertHist = [], rs = [];
+  const mkAlert = (Id, Severity, Scope, Target, Message, Metric, Value, Threshold, Remediation) => ({ Id, Severity, Scope, Target, Message, Metric, Value, Threshold, Remediation, Time: new Date(now - ri(1, 40) * 60000).toISOString() });
+  pools.forEach(pool => {
+    for (let i = 1; i <= pool.n; i++) {
+      const hn = `${pool.name.replace('-POOL', '')}-${String(i).padStart(2, '0')}`;
+      const scenario = hn === 'CAD-03' ? 'disk' : hn === 'CAD-05' ? 'cpu' : hn === 'OFFICE-04' ? 'agent' : hn === 'OFFICE-05' ? 'stale' : hn === 'CAD-06' ? 'idle' : 'ok';
+      const nSess = scenario === 'idle' ? 0 : scenario === 'stale' ? 3 : ri(3, pool.gpu ? 7 : 9);
+      const cpu = scenario === 'cpu' ? rf(90, 97) : scenario === 'idle' ? rf(1, 4) : rf(18, 68), mem = scenario === 'cpu' ? rf(86, 92) : scenario === 'idle' ? rf(8, 12) : rf(35, 78), dlat = scenario === 'disk' ? rf(48, 95) : rf(2, 14), free = scenario === 'agent' ? rf(5, 8) : rf(22, 61);
+      const sessions = [], alerts = [], factors = [];
+      let score = 100;
+      if (cpu >= 92) { score -= 25; factors.push(`CPU critical (${cpu.toFixed(0)}%)`); alerts.push(mkAlert('HOST_CPU_SUSTAINED', 'critical', 'host', hn, `CPU sustained at ${cpu.toFixed(0)}% over last 6 samples`, 'CpuPct', +cpu.toFixed(1), 92, 'Identify top CPU process; consider draining host / scaling out')); } else if (cpu >= 80) { score -= 10; factors.push(`CPU high (${cpu.toFixed(0)}%)`); }
+      if (mem >= 85) { score -= 10; factors.push(`Memory high (${mem.toFixed(0)}%)`); alerts.push(mkAlert('HOST_MEM_SUSTAINED', 'warning', 'host', hn, `Memory sustained at ${mem.toFixed(0)}%`, 'MemUsedPct', +mem.toFixed(1), 85, 'Review memory per session')); }
+      if (dlat >= 45) { score -= 25; factors.push(`Disk latency ${dlat.toFixed(0)}ms`); alerts.push(mkAlert('HOST_DISK_LATENCY', 'critical', 'host', hn, `Disk latency ${dlat.toFixed(0)}ms`, 'WorstDiskLatencyMs', +dlat.toFixed(1), 45, 'Check OS disk tier / Performance Plus; check Defender real-time scanning of CAD paths')); }
+      if (free <= 7) { score -= 20; factors.push(`System disk ${free.toFixed(0)}% free`); alerts.push(mkAlert('HOST_DISK_FREE', 'critical', 'host', hn, `System disk only ${free.toFixed(0)}% free`, 'SysDiskFreePct', +free.toFixed(1), 7, 'Clear temp / Windows Update cache / stale profiles')); }
+      if (scenario === 'agent') { score -= 50; factors.push('AVD agent unhealthy (Stopped)'); alerts.push(mkAlert('AVD_AGENT', 'critical', 'host', hn, 'AVD agent unhealthy: service=Stopped running=False registered=True', 'AvdAgent', 'Stopped', 'Running', 'Restart RDAgentBootLoader; re-register host if needed')); }
+      const uptime = scenario === 'ok' && i === 1 ? rf(400, 500) : rf(10, 300); const pending = i % 4 === 0;
+      if (pending) { score -= 5; factors.push('Pending reboot'); alerts.push(mkAlert('HOST_PENDING_REBOOT', 'info', 'host', hn, 'Pending reboot (CBS, WindowsUpdate)', 'PendingReboot', true, false, 'Schedule reboot in maintenance window')); }
+      if (uptime >= 336) { score -= 5; factors.push(`Uptime ${Math.round(uptime / 24)}d`); alerts.push(mkAlert('HOST_UPTIME', 'info', 'host', hn, `Host up for ${Math.round(uptime / 24)} days`, 'UptimeHours', +uptime.toFixed(0), 336, 'Schedule reboot')); }
+      score = Math.max(0, Math.round(score));
+      for (let s = 0; s < nSess; s++) {
+        const u = users[ui++ % users.length], full = 'CORP\\' + u, id = 2 + s, active = rnd() > 0.2, bad = rnd();
+        const udp = rnd() > 0.25, rtt = bad < 0.08 ? rf(230, 420) : bad < 0.2 ? rf(120, 200) : rf(8, 70), lag = scenario === 'cpu' ? rf(500, 1800) : bad < 0.1 ? rf(400, 900) : rf(20, 180);
+        const scpu = scenario === 'cpu' && s === 0 ? rf(55, 70) : rf(0.5, 18), smem = pool.gpu ? rf(1800, 9500) : rf(600, 3200);
+        const lgTotal = bad < 0.12 ? rf(95, 190) : bad < 0.3 ? rf(46, 85) : rf(14, 42); const prof = lgTotal * rf(0.3, 0.5), gpo = lgTotal * rf(0.1, 0.25), fsx = lgTotal * rf(0.15, 0.3), shell = lgTotal * rf(0.05, 0.12);
+        const top = pick(pool.apps), hung = scenario === 'cpu' && s === 1;
+        const sf = [], sa = []; let ss = 100; const target = `${full}@${hn}`;
+        if (!active) { if (rnd() > 0.5) { ss -= 20; sf.push('Disconnected 9.5h'); sa.push(mkAlert('SESSION_STALE_DISCONNECT', 'info', 'session', target, `Disconnected for 9.5h, holding ${smem.toFixed(0)} MB`, 'IdleMinutes', 570, 480, 'Log off stale disconnected session')); } }
+        else {
+          if (rtt >= 220) { ss -= 25; sf.push(`RTT ${rtt.toFixed(0)}ms`); sa.push(mkAlert('SESSION_RTT', 'critical', 'session', target, `Round-trip latency ${rtt.toFixed(0)}ms (${udp ? 'UDP (Shortpath)' : 'TCP'})`, 'RttMs', +rtt.toFixed(0), 220, 'Check client network / Wi-Fi; verify UDP (Shortpath) is in use')); } else if (rtt >= 120) { ss -= 10; sf.push(`RTT ${rtt.toFixed(0)}ms`); sa.push(mkAlert('SESSION_RTT', 'warning', 'session', target, `Round-trip latency ${rtt.toFixed(0)}ms`, 'RttMs', +rtt.toFixed(0), 120, 'Check client network')); }
+          if (lag >= 1000) { ss -= 25; sf.push(`Input delay ${lag.toFixed(0)}ms`); sa.push(mkAlert('SESSION_INPUT_DELAY', 'critical', 'session', target, `User input delay ${lag.toFixed(0)}ms (session feels frozen)`, 'InputDelayMaxMs', +lag.toFixed(0), 1000, 'Check session CPU / host CPU; identify hung foreground app')); } else if (lag >= 400) { ss -= 10; sf.push(`Input delay ${lag.toFixed(0)}ms`); sa.push(mkAlert('SESSION_INPUT_DELAY', 'warning', 'session', target, `User input delay ${lag.toFixed(0)}ms`, 'InputDelayMaxMs', +lag.toFixed(0), 400, 'Review top processes in session')); }
+          if (scpu >= 50) { ss -= 10; sf.push(`Session CPU ${scpu.toFixed(0)}%`); sa.push(mkAlert('SESSION_CPU', 'warning', 'session', target, `Session using ${scpu.toFixed(0)}% of host CPU (top: ${top})`, 'CpuPct', +scpu.toFixed(1), 50, 'Check runaway process')); }
+          if (smem >= 8192) { ss -= 5; sf.push(`Session memory ${(smem / 1024).toFixed(1)} GB`); }
+          if (lgTotal >= 90) { ss -= 25; sf.push(`Logon ${lgTotal.toFixed(0)}s`); sa.push(mkAlert('SESSION_LOGON_SLOW', 'warning', 'session', target, `Logon took ${lgTotal.toFixed(0)}s (profile ${prof.toFixed(0)}s, GPO ${gpo.toFixed(0)}s, FSLogix ${fsx.toFixed(0)}s)`, 'LogonTotalSec', +lgTotal.toFixed(0), 90, 'Review FSLogix container size / GPO count / logon scripts')); } else if (lgTotal >= 45) { ss -= 10; sf.push(`Logon ${lgTotal.toFixed(0)}s`); }
+          if (hung) { ss -= 15; sf.push('1 app(s) not responding'); sa.push(mkAlert('SESSION_APP_HUNG', 'warning', 'session', target, 'Not responding: OpenRoadsDesigner', 'NotResponding', 1, 0, 'Wait / end hung process')); }
+          if (score < 60) { const d = Math.round((60 - score) / 2); ss -= d; sf.push(`Host pressure (host score ${score})`); }
+        }
+        ss = Math.max(0, Math.round(ss));
+        const procs = [{ Name: top, Pid: ri(1000, 30000), CpuPct: +scpu.toFixed(1), WorkingSetMB: Math.round(smem * 0.55), Responding: !hung }, { Name: top === 'OUTLOOK' ? 'Teams' : 'OUTLOOK', Pid: ri(1000, 30000), CpuPct: +(rf(0, 2)).toFixed(1), WorkingSetMB: Math.round(smem * 0.2), Responding: true }, { Name: top === 'msedge' ? 'chrome' : 'msedge', Pid: ri(1000, 30000), CpuPct: +(rf(0, 3)).toFixed(1), WorkingSetMB: Math.round(smem * 0.15), Responding: true }, { Name: 'explorer', Pid: ri(1000, 30000), CpuPct: 0.1, WorkingSetMB: 90, Responding: true }];
+        if (hung) procs[0].Name = 'OpenRoadsDesigner';
+        sessions.push({ SessionId: id, UserName: full, Sid: 'S-1-5-21-1234567890-' + ri(1000, 9999), SessionName: active ? `rdp-tcp#${id}` : '', State: active ? 'Active' : 'Disconnected', IdleMinutes: active ? ri(0, 40) : ri(60, 700), LogonTime: new Date(now - ri(20, 540) * 60000).toISOString(), Transport: active ? (udp ? 'UDP (Shortpath)' : 'TCP') : 'n/a', RttMs: active ? +rtt.toFixed(0) : null, TcpRttMs: active ? +(rtt * 1.1).toFixed(0) : null, UdpRttMs: active && udp ? +rtt.toFixed(0) : 0, BandwidthKbps: active ? ri(900, 24000) : null, SentKbps: active ? ri(100, 6000) : null, LossRate: active ? +(rf(0, 0.6)).toFixed(2) : null, InputDelayMaxMs: active ? +lag.toFixed(0) : null, InputDelayAvgMs: active ? +(lag * 0.3).toFixed(0) : null, EncodingTimeMs: active ? +(rf(2, 14)).toFixed(1) : null, OutputFps: active ? ri(12, 30) : null, InputFps: active ? ri(15, 30) : null, FramesSkippedServer: active && scenario === 'cpu' ? ri(6, 20) : 0, FramesSkippedNetwork: active && rtt > 200 ? ri(4, 12) : 0, FramesSkippedClient: 0, CpuPct: +scpu.toFixed(1), MemoryMB: Math.round(smem), ProcessCount: ri(28, 70), TopProcessName: procs[0].Name, TopProcesses: procs, NotRespondingCount: hung ? 1 : 0, NotRespondingNames: hung ? ['OpenRoadsDesigner'] : [], FsLogix: { Attached: pool.gpu, VhdPath: pool.gpu ? `\\\\fileserver\\profiles\\${u}\\Profile_${u}.vhdx` : null }, Logon: { TotalSec: +lgTotal.toFixed(1), ProfileLoadSec: +prof.toFixed(1), GpoSec: +gpo.toFixed(1), FsLogixSec: +fsx.toFixed(1), ShellSec: +shell.toFixed(1), Method: 'LSM 21->22', LogonStart: null }, Score: { Score: ss, Grade: ss >= 90 ? 'A' : ss >= 80 ? 'B' : ss >= 70 ? 'C' : ss >= 60 ? 'D' : 'F', Stress: stressOf(ss), Factors: sf } });
+        alerts.push(...sa);
+      }
+      const act = sessions.filter(s => s.State === 'Active');
+      const ts = scenario === 'stale' ? new Date(now - 47 * 60000) : new Date(now - ri(5, 50) * 1000);
+      hosts.push({ SchemaVersion: 1, AgentVersion: '1.0.0', Timestamp: ts.toISOString(), Host: hn, HostPool: pool.name, Tags: pool.gpu ? ['CAD', 'Bentley', 'Autodesk'] : ['Office'], CollectionMs: ri(900, 2600),
+        Score: { Score: score, Grade: score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score >= 60 ? 'D' : 'F', Stress: stressOf(score), Factors: factors, AvgSessionScore: act.length ? Math.round(act.reduce((a, s) => a + s.Score.Score, 0) / act.length) : null },
+        Metrics: { OsCaption: 'Windows 11 Enterprise multi-session', OsBuild: '26100', Model: 'Virtual Machine', Cores: pool.cores, TotalMemoryMB: pool.mem, CpuPct: +cpu.toFixed(1), CpuQueue: +(cpu / 30).toFixed(1), CpuQueuePerCore: +(cpu / 30 / pool.cores).toFixed(2), ContextSwitches: ri(20000, 90000), MemUsedPct: +mem.toFixed(1), MemAvailableMB: Math.round(pool.mem * (1 - mem / 100)), MemCommittedPct: +(mem * 0.8).toFixed(1), PagesPerSec: scenario === 'cpu' ? ri(900, 2500) : ri(0, 200), Disks: [{ Drive: 'C:', FreePct: +free.toFixed(1), ReadLatencyMs: +(dlat * 0.7).toFixed(1), WriteLatencyMs: +dlat.toFixed(1), QueueLength: +(dlat / 10).toFixed(1), Iops: ri(80, 1900) }, { Drive: 'D:', FreePct: +(rf(40, 90)).toFixed(1), ReadLatencyMs: +(rf(1, 4)).toFixed(1), WriteLatencyMs: +(rf(1, 6)).toFixed(1), QueueLength: 0.1, Iops: ri(5, 120) }], SysDiskFreePct: +free.toFixed(1), WorstDiskLatencyMs: +dlat.toFixed(1), NetBytesPerSec: ri(200000, 9000000), NetOutputQueue: 0, TcpRetransmitsPerSec: +(rf(0, 1.5)).toFixed(2), Gpu: pool.gpu ? { Util3dPct: +(rf(5, 60)).toFixed(1), UtilTotalPct: +(rf(10, 70)).toFixed(1), DedicatedMemMB: ri(1500, 7000) } : null, LastBoot: new Date(now - uptime * 36e5).toISOString(), UptimeHours: +uptime.toFixed(1), PendingReboot: pending, PendingRebootReasons: pending ? ['CBS', 'WindowsUpdate'] : [] },
+        AvdAgent: { Installed: true, ServiceStatus: scenario === 'agent' ? 'Stopped' : 'Running', AgentRunning: scenario !== 'agent', Registered: true, Version: '1.0.11010.1400', Healthy: scenario !== 'agent' },
+        FsLogix: pool.gpu ? { Installed: true, Version: '3.25.1012', ServiceStatus: 'Running', ProfilesEnabled: true, ErrorsInInterval: scenario === 'disk' ? 2 : 0, RecentErrors: scenario === 'disk' ? [{ Time: ts.toISOString(), Id: 26, Message: 'LoadProfile failed: The semaphore timeout period has expired (0x79)' }] : [] } : { Installed: false },
+        Events: { Since: new Date(ts - 30000).toISOString(), Disconnects: ri(0, 1), Reconnects: ri(0, 1), Logoffs: 0, AppCrashes: scenario === 'disk' ? [{ Time: ts.toISOString(), Process: 'MicroStation.exe', Id: 1000 }] : [], AppHangs: [] },
+        Capabilities: { InputDelayCounters: true, Gpu: pool.gpu, FsLogix: pool.gpu }, SessionSummary: { Total: sessions.length, Active: act.length, Disconnected: sessions.length - act.length }, Sessions: sessions,
+        TopProcesses: sessions.flatMap(s => s.TopProcesses.slice(0, 2).map(p => ({ ...p, SessionId: s.SessionId, UserName: s.UserName }))).sort((a, b) => b.CpuPct - a.CpuPct).slice(0, 10), Alerts: alerts, SyntheticProbe: null });
+      if (scenario === 'disk') hosts[hosts.length - 1].Alerts.push(mkAlert('FSLOGIX_ERRORS', 'warning', 'host', hn, '2 FSLogix error(s): LoadProfile failed: The semaphore timeout period has expired (0x79)', 'FsLogixErrors', 2, 0, 'Check profile share, VHD locks, orphaned sessions'), mkAlert('APP_CRASH', 'warning', 'host', hn, '1 app crash/hang event(s): MicroStation.exe', 'AppCrashes', 1, 0, 'Review Application log; check app version / GPU driver'));
+      // trends
+      const base = scenario === 'cpu' ? 80 : scenario === 'idle' ? 3 : rf(25, 55);
+      hourly[hn] = []; daily[hn] = [];
+      for (let hh = 7 * 24 - 1; hh >= 0; hh--) {
+        const t = new Date(now - hh * 36e5); t.setMinutes(0, 0, 0); const hr = t.getHours(), wd = t.getDay(), work = wd > 0 && wd < 6 && hr >= 7 && hr <= 18;
+        const load = (work ? 1 : 0.25) * (1 + 0.3 * Math.sin((hr - 10) / 3)); const c = Math.min(99, base * load + rf(-6, 6)), m = Math.min(98, (scenario === 'idle' ? 10 : 30 + base * 0.6) * (work ? 1 : 0.7) + rf(-4, 4));
+        const sc = Math.max(10, Math.round(100 - Math.max(0, c - 70) * 1.2 - Math.max(0, m - 80) * 1.5 - (scenario === 'disk' ? 20 : 0) - rf(0, 6)));
+        const sm = scenario === 'idle' ? 0 : Math.round((work ? nSess + rf(-1, 2) : rf(0, 2))); const sAct = Math.max(0, sm - ri(0, 1));
+        const lgA = Math.max(10, (scenario === 'disk' ? 70 : 30) + rf(-8, 12) * load); const n = 120;
+        hourly[hn].push({ t: t.toISOString(), n, cpuAvg: +c.toFixed(1), cpuP95: +Math.min(100, c + 8).toFixed(1), memAvg: +m.toFixed(1), memP95: +Math.min(100, m + 4).toFixed(1), dlatAvg: +(scenario === 'disk' ? rf(30, 70) : rf(2, 9)).toFixed(1), dlatP95: +(scenario === 'disk' ? rf(60, 110) : rf(5, 18)).toFixed(1), gpuP95: pool.gpu ? +(rf(20, 80) * load).toFixed(1) : null, scoreAvg: sc, scoreMin: Math.max(0, sc - ri(3, 15)), sessAvg: +(sm * 0.9).toFixed(1), sessMax: sm, actMax: sAct, sscoreAvg: sAct ? Math.max(10, sc + ri(-8, 6)) : null, rttAvg: sAct ? +rf(20, 90).toFixed(0) : null, rttP95: sAct ? +rf(80, 260).toFixed(0) : null, lagAvg: sAct ? +rf(30, 150).toFixed(0) : null, lagP95: sAct ? +rf(150, 700).toFixed(0) : null, alerts: Math.round(Math.max(0, (70 - sc) / 8)) });
+        if (work && sAct && rnd() > 0.55) { for (let k = 0; k < ri(1, 3); k++) { const lg = Math.max(8, lgA + rf(-10, 40) * (rnd() > 0.85 ? 3 : 1)); logons.push({ host: hn, u: 'CORP\\' + pick(users), t: new Date(t.getTime() + ri(0, 3500) * 1000).toISOString(), lg: +lg.toFixed(1) }); } }
+        if (hr === 9 && rnd() > 0.6) alertHist.push({ t: t.toISOString(), host: hn, pool: pool.name, id: pick(['HOST_CPU_SUSTAINED', 'SESSION_RTT', 'SESSION_LOGON_SLOW', 'HOST_DISK_LATENCY', 'SESSION_INPUT_DELAY', 'HOST_PENDING_REBOOT']), sev: pick(['warning', 'warning', 'critical', 'info']), scope: 'host', target: hn, msg: 'historical alert' });
+      }
+      for (let dd = 89; dd >= 0; dd--) { const d = new Date(now - dd * 864e5); const wd = d.getDay(), work = wd > 0 && wd < 6; const c = base * (work ? 1 : 0.3) + rf(-5, 5), lgs = work ? [rf(20, 40), rf(25, 60), rf(30, 100)] : []; daily[hn].push({ d: d.toISOString().slice(0, 10), cpuAvg: +c.toFixed(1), cpuP95: +Math.min(100, c * 1.4).toFixed(1), memAvg: +(30 + base * 0.5).toFixed(1), memP95: +(40 + base * 0.6).toFixed(1), dlatP95: +(scenario === 'disk' && dd < 5 ? rf(60, 110) : rf(5, 20)).toFixed(1), scoreAvg: Math.max(10, Math.round(100 - Math.max(0, c * 1.4 - 70) - (scenario === 'disk' && dd < 5 ? 20 : 0) - rf(0, 8))), scoreMin: 40, sessMax: work ? Math.max(0, nSess + ri(-1, 2)) : ri(0, 2), sscoreAvg: work ? ri(60, 95) : null, rttP95: +rf(80, 260).toFixed(0), lagP95: +rf(150, 700).toFixed(0), alerts: ri(0, work ? 6 : 1), logons: lgs.length * 3, logonAvg: lgs.length ? +(lgs.reduce((a, b) => a + b) / lgs.length).toFixed(1) : null, logonP95: lgs.length ? +Math.max(...lgs).toFixed(1) : null }); }
+      const hr7 = hourly[hn], p95 = a => { const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.ceil(.95 * s.length) - 1)]; };
+      const cpu95 = +p95(hr7.map(x => x.cpuP95)).toFixed(1), mem95 = +p95(hr7.map(x => x.memP95)).toFixed(1), peak = Math.max(...hr7.map(x => x.sessMax)), avgS = +(hr7.reduce((a, x) => a + x.sessAvg, 0) / hr7.length).toFixed(1);
+      const busy = hr7.filter(x => x.sessAvg >= 1); const cpuBusy = busy.length ? +p95(busy.map(x => x.cpuP95)).toFixed(1) : cpu95;
+      let sug = 'Right-sized', why = `P95 CPU ${cpu95}%, P95 memory ${mem95}%, peak ${peak} sessions`;
+      if (cpu95 >= 85 || mem95 >= 88) { sug = 'Scale up / add host'; why = `Sustained pressure: P95 CPU ${cpu95}%, P95 memory ${mem95}% (peak ${peak} sessions)`; } else if (cpu95 <= 35 && mem95 <= 50) { sug = 'Downsize candidate'; why = `Low utilization: P95 CPU ${cpu95}%, P95 memory ${mem95}% while hosting up to ${peak} sessions`; } else if (avgS < 0.5) { sug = 'Idle - consider deallocating'; why = `Averaged ${avgS} sessions over the window`; }
+      rs.push({ Host: hn, HostPool: pool.name, Cores: pool.cores, MemGB: Math.round(pool.mem / 1024), CpuP95: cpu95, CpuP95Busy: cpuBusy, MemP95: mem95, PeakSessions: peak, AvgSessions: avgS, MemPerSessionGB: peak ? +((pool.mem * mem95 / 100) / 1024 / peak).toFixed(1) : null, Suggestion: sug, Reason: why });
+    }
+  });
+  const apps = {}; hosts.forEach(h => h.Sessions.forEach(s => { apps[s.TopProcessName] ||= { minutes: 0, users: new Set() }; apps[s.TopProcessName].minutes += ri(400, 6000); apps[s.TopProcessName].users.add(s.UserName); }));
+  const fleet = buildFleet(hosts); fleet.RightSizing = rs; fleet.GeneratedBy = 'demo';
+  const trends = { SchemaVersion: 1, GeneratedAt: now.toISOString(), TrendDays: 7, DailyDays: 90, Hourly: hourly, Daily: daily, Logons: logons.sort((a, b) => b.t.localeCompare(a.t)), Apps: Object.entries(apps).map(([name, v]) => ({ name, minutes: v.minutes, users: v.users.size })).sort((a, b) => b.minutes - a.minutes), AlertHistory: alertHist.sort((a, b) => a.t.localeCompare(b.t)) };
+  return [fleet, trends];
+}
+function startDemo() { applyData(...demoData()); setSource('demo', 'Demo data (synthetic)'); }
+
+// ============================================================================================
+// Wiring
+// ============================================================================================
+$('#btnFolder').onclick = openFolder;
+$('#fileInput').onchange = e => loadFiles(e.target.files);
+$('#btnDemo').onclick = startDemo;
+$('#btnRefresh').onclick = refresh;
+$('#btnTheme').onclick = () => { const r = document.documentElement; r.dataset.theme = r.dataset.theme === 'dark' ? 'light' : 'dark'; try { localStorage.setItem('dexTheme', r.dataset.theme); } catch (e) { } render(); };
+$$('#nav button').forEach(b => b.onclick = () => { S.tab = b.dataset.tab; render(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+document.addEventListener('dragover', e => { e.preventDefault(); $('#drop')?.classList.add('hover'); });
+document.addEventListener('dragleave', () => $('#drop')?.classList.remove('hover'));
+document.addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer.files.length) loadFiles(e.dataTransfer.files); });
+window.addEventListener('resize', () => { if (S.fleet) drawCharts(); });
+function tick() { if ($('#autoRefresh').checked && S.source !== 'none' && S.source !== 'files' && !$('#drawer').classList.contains('open')) refresh(); else updateAge(); }
+setInterval(tick, 30000);
+try { const t = localStorage.getItem('dexTheme'); if (t) document.documentElement.dataset.theme = t; } catch (e) { }
+(async () => { render(); if (!(await tryFetch())) { if (location.hash === '#demo') startDemo(); } })();
+</script>
+</body>
+</html>

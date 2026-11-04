@@ -1,0 +1,18 @@
+# runtime output (never commit telemetry)
+latest/
+history/
+rollups/
+alerts/
+reports/
+fleet.json
+trends.json
+state.json
+*.log
+*.tmp
+# local config with real share paths / webhooks
+agent.config.json
+remediation.config.json
+# OS / editor
+Thumbs.db
+.DS_Store
+.vscode/

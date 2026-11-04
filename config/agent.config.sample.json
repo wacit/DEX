@@ -1,0 +1,27 @@
+{
+  "OutputPath": "C:\\ProgramData\\AvdDex",
+  "SharePath": "\\\\fileserver\\AvdDex",
+  "HostPool": "CAD-POOL",
+  "Tags": ["CAD", "GPU"],
+  "IntervalSeconds": 30,
+  "TopProcesses": 8,
+  "SustainedSamples": 5,
+  "WebhookUrl": "",
+  "WebhookMinSeverity": "warning",
+  "WriteEventLog": true,
+  "HistoryRetentionDays": 0,
+  "SyntheticProbePath": "",
+  "Thresholds": {
+    "CpuWarn": 80, "CpuCrit": 92,
+    "MemWarn": 85, "MemCrit": 94,
+    "DiskLatencyWarnMs": 20, "DiskLatencyCritMs": 45,
+    "DiskFreeWarnPct": 15, "DiskFreeCritPct": 7,
+    "RttWarnMs": 120, "RttCritMs": 220,
+    "InputDelayWarnMs": 400, "InputDelayCritMs": 1000,
+    "LogonWarnSec": 45, "LogonCritSec": 90,
+    "SessionCpuWarnPct": 50, "SessionCpuCritPct": 85,
+    "GpuWarnPct": 85, "GpuCritPct": 97,
+    "RetransmitWarnPerSec": 5,
+    "UptimeWarnDays": 14
+  }
+}

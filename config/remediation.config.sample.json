@@ -1,0 +1,8 @@
+{
+  "AVD_AGENT":                { "Enabled": false },
+  "FSLOGIX_SERVICE":          { "Enabled": false },
+  "HOST_DISK_FREE":           { "Enabled": false, "TempOlderThanDays": 7, "ClearWindowsUpdateCache": false },
+  "SESSION_STALE_DISCONNECT": { "Enabled": false, "IdleMinutes": 480 },
+  "SESSION_APP_HUNG":         { "Enabled": false, "ProcessAllowList": ["MicroStation", "OpenRoadsDesigner", "acad", "Civil3D", "EXCEL", "WINWORD", "OUTLOOK", "chrome", "msedge"] },
+  "HOST_PENDING_REBOOT":      { "Enabled": false, "WindowStartHour": 2, "WindowEndHour": 5 }
+}
